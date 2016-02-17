@@ -26,7 +26,7 @@ import (
 type  Chaincode struct {
 }
 
-type Event struct {
+type Log struct {
 	Name            string `json:"name"`
 	Time			string `json:"time"`
 	Text			string `json:"text"`
@@ -34,8 +34,8 @@ type Event struct {
 	Users			[]string `json:"users"`
 }
 
-type EventHolder struct {
-	Events 			[]Event `json:"events"`
+type LogsHolder struct {
+	Logs 			[]Log `json:"logs"`
 }
 
 //==============================================================================================================================
@@ -45,26 +45,26 @@ type ECertResponse struct {
 	OK string `json:"OK"`
 }	
 
-const   ROLE_AUTHORITY  	=  0
+const   ROLE_AUTHORITY      =  4
 const   ROLE_MANUFACTURER   =  1
 const   ROLE_PRIVATE_ENTITY =  2
 const   ROLE_LEASE_COMPANY  =  3
-const   ROLE_SCRAP_MERCHANT =  4
+const   ROLE_SCRAP_MERCHANT =  0
 
 //==============================================================================================================================
-//	Init Function - Called when the user deploys the chaincode sets up base events (blank array)																
+//	Init Function - Called when the user deploys the chaincode sets up base logs (blank array)																
 //==============================================================================================================================
 func (t *Chaincode) init(stub *shim.ChaincodeStub) ([]byte, error) {
 
-	var eh EventHolder
+	var eh LogsHolder
 	
 	bytes, err := json.Marshal(eh)
 	
-															if err != nil { return nil, errors.New("Error creating event record") }
+															if err != nil { return nil, errors.New("Error creating log record") }
 																
-	err = stub.PutState("Events", bytes)
+	err = stub.PutState("Vehicle_Log", bytes)
 	
-															if err != nil { return nil, errors.New("Error creating blank event array") }
+															if err != nil { return nil, errors.New("Error creating blank logs array") }
 
 	return nil, nil
 }
@@ -126,38 +126,38 @@ func (t *Chaincode) check_role(stub *shim.ChaincodeStub, args []string) (int64, 
 }
 
 //==============================================================================================================================
-//	Event Functions
+//	Log Functions Functions
 //==============================================================================================================================
-//	Create Event - Creates a new event object using the data passed and the current time then appends it to the events array
+//	Create Log - Creates a new log object using the data passed and the current time then appends it to the logs array
 //				   before saving the state to the ledger
 //==============================================================================================================================
-func (t *Chaincode) create_event(stub *shim.ChaincodeStub, event_name string, event_text string, event_obj_id string, event_users []string) ([]byte, error) {
+func (t *Chaincode) create_log(stub *shim.ChaincodeStub, log_name string, log_text string, log_obj_id string, log_users []string) ([]byte, error) {
 
-	var e Event
+	var e Log
 	
-	e.Name 	 = event_name
+	e.Name 	 = log_name
 	e.Time	 = time.Now().Format("02/01/2006 15:04")
-	e.Text	 = event_text
-	e.Obj_ID = event_obj_id
-	e.Users	 = event_users
+	e.Text	 = log_text
+	e.Obj_ID = log_obj_id
+	e.Users	 = log_users
 
-	bytes, err := stub.GetState("Events")
+	bytes, err := stub.GetState("Vehicle_Log")
 		
-															if err != nil { return nil, errors.New("Unable to get events") }
+															if err != nil { return nil, errors.New("Unable to get logs") }
 	
-	var eh EventHolder
+	var eh LogsHolder
 	
 	err = json.Unmarshal(bytes, &eh)						
 	
-															if err != nil {	return nil, errors.New("Corrupt events record") }
+															if err != nil {	return nil, errors.New("Corrupt log record") }
 															
-	eh.Events = append(eh.Events, e)
+	eh.Logs = append(eh.Logs, e)
 	
 	bytes, err = json.Marshal(eh)
 	
-															if err != nil { fmt.Print("Error creating event record") }
+															if err != nil { fmt.Print("Error creating log record") }
 
-	err = stub.PutState("Events", bytes)
+	err = stub.PutState("Vehicle_Log", bytes)
 
 															if err != nil { return nil, errors.New("Unable to put the state") }
 
@@ -165,20 +165,20 @@ func (t *Chaincode) create_event(stub *shim.ChaincodeStub, event_name string, ev
 }
 
 //==============================================================================================================================
-//	get_events - Takes a users name and returns the events they are entitled to. If they are the regulator they see all events
-//				 otherwise it calls a function to get the users events
+//	get_logs - Takes a users name and returns the logs they are entitled to. If they are the regulator they see all logs
+//				 otherwise it calls a function to get the users logs
 //==============================================================================================================================
-func (t *Chaincode) get_events(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+func (t *Chaincode) get_logs(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 
-	bytes, err := stub.GetState("Events")
+	bytes, err := stub.GetState("Vehicle_Log")
 		
-																			if err != nil { return nil, errors.New("Unable to get events") }
+																			if err != nil { return nil, errors.New("Unable to get logs") }
 																	
-	var eh EventHolder
+	var eh LogsHolder
 	
 	err = json.Unmarshal(bytes, &eh)						
 	
-																			if err != nil {	return nil, errors.New("Corrupt events record") }
+																			if err != nil {	return nil, errors.New("Corrupt logs record") }
 															
 	ecert, err := t.get_ecert(stub, args[0])
 	
@@ -188,7 +188,7 @@ func (t *Chaincode) get_events(stub *shim.ChaincodeStub, args []string) ([]byte,
 	
 																			if err != nil { return nil, err }
 																	
-	if role == ROLE_AUTHORITY {												// Return all events if authority
+	if role == ROLE_AUTHORITY {												// Return all logs if authority
 			
 			repNull := strings.Replace(string(bytes), "null", "[]", 1)		// If the array is blank it has the json value null so we need to make it an empty array
 	
@@ -196,23 +196,23 @@ func (t *Chaincode) get_events(stub *shim.ChaincodeStub, args []string) ([]byte,
 	
 	} else {
 	
-		return t.get_users_events(stub, eh, args[0])
+		return t.get_users_logs(stub, eh, args[0])
 		
 	}
 	
 }
 
 //==============================================================================================================================
-//	get_obj_events - Takes an events array and returns all the events that occured between "from" and "to" in the array to the  
+//	get_obj_logs - Takes an logs array and returns all the logs that occured between "from" and "to" in the array to the  
 //				 	Object with ID obj_id
 //==============================================================================================================================
-func (t *Chaincode) get_obj_events(stub *shim.ChaincodeStub, events []Event, obj_id string, from int, to int, user string) []Event {
+func (t *Chaincode) get_obj_logs(stub *shim.ChaincodeStub, logs []Log, obj_id string, from int, to int, user string) []Log {
 	
-	var resp []Event
+	var resp []Log
 	
 	for i := from; i < to; i++ {
-		if events[i].Obj_ID == obj_id && !contains(events[i].Users, user) {
-			resp = append(resp, events[i])
+		if logs[i].Obj_ID == obj_id && !contains(logs[i].Users, user) {
+			resp = append(resp, logs[i])
 		}
 	}
 															
@@ -220,29 +220,29 @@ func (t *Chaincode) get_obj_events(stub *shim.ChaincodeStub, events []Event, obj
 }
 
 //==============================================================================================================================
-//	get_users_events - Takes a users name and loops through all events to find those with the user as a participant. When it
-//				       finds an event it notes the ID of the object it refers to and then gets all the events from the last time 
-//					   it found an event for that object to now where the user isn't involved as they have permission to view
+//	get_users_logs - Takes a users name and loops through all logs to find those with the user as a participant. When it
+//				       finds a log it notes the ID of the object it refers to and then gets all the logs from the last time 
+//					   it found a log for that object to now where the user isn't involved as they have permission to view
 //					   the objects history before they were involved
 //==============================================================================================================================
-func (t *Chaincode) get_users_events(stub *shim.ChaincodeStub, eh EventHolder, name string) ([]byte, error) {
+func (t *Chaincode) get_users_logs(stub *shim.ChaincodeStub, eh LogsHolder, name string) ([]byte, error) {
 	
-	users_events := []Event{}
+	users_logs := []Log{}
 	var searched_to map[string]int
 	searched_to = make(map[string]int)
 	
-	for i, event := range eh.Events {
-		if contains(event.Users, name) {
-			users_events = append(users_events, event)
-			users_events = append(users_events, t.get_obj_events(stub, eh.Events, event.Obj_ID, searched_to[event.Obj_ID], i, name)...) // get the events of the car before the user had ownership
-			searched_to[event.Obj_ID] = i;
+	for i, log := range eh.Logs {
+		if contains(log.Users, name) {
+			users_logs = append(users_logs, log)
+			users_logs = append(users_logs, t.get_obj_logs(stub, eh.Logs, log.Obj_ID, searched_to[log.Obj_ID], i, name)...) // get the logs of the car before the user had ownership
+			searched_to[log.Obj_ID] = i;
 		} 
 	}
 	
-	var found_events EventHolder
-	found_events.Events = users_events
+	var found_logs LogsHolder
+	found_logs.Logs = users_logs
 	
-	bytes, err := json.Marshal(found_events)
+	bytes, err := json.Marshal(found_logs)
 	
 															if err != nil { fmt.Print("Error sending record") }
 	
@@ -258,7 +258,7 @@ func (t *Chaincode) Run(stub *shim.ChaincodeStub, function string, args []string
 
 	// Handle different functions
 	if function == "init" { return t.init(stub) 
-	} else if function == "create_event" {
+	} else if function == "create_log" {
 		if(len(args) < 4) {
 			return nil, errors.New("Invalid number of arguments supplied")
 		}
@@ -269,7 +269,7 @@ func (t *Chaincode) Run(stub *shim.ChaincodeStub, function string, args []string
 		
 			users_involved = append(users_involved, args[i])
 		}
-		return t.create_event(stub, args[0], args[1], args[2], users_involved) 
+		return t.create_log(stub, args[0], args[1], args[2], users_involved) 
 	}
 	
 	return nil, errors.New("Function of that name not found")
@@ -279,7 +279,7 @@ func (t *Chaincode) Run(stub *shim.ChaincodeStub, function string, args []string
 //==============================================================================================================================
 func (t *Chaincode) Query(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	
-	if function == "get_events" { return t.get_events(stub, args) }
+	if function == "get_logs" { return t.get_logs(stub, args) }
 	
 	return nil, errors.New("Function of that name not found")
 }
