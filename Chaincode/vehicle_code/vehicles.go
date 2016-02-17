@@ -17,16 +17,16 @@ import (
 	"regexp"
 )
 
-const   ROLE_AUTHORITY  	=  4
+const   ROLE_AUTHORITY      =  4
 const   ROLE_MANUFACTURER   =  1
 const   ROLE_PRIVATE_ENTITY =  2
 const   ROLE_LEASE_COMPANY  =  3
 const   ROLE_SCRAP_MERCHANT =  0
 
-const   STATE_TEMPLATE  	 	=  0
-const   STATE_MANUFACTURE  	 	=  1
+const   STATE_TEMPLATE  		=  0
+const   STATE_MANUFACTURE  		=  1
 const   STATE_PRIVATE_OWNERSHIP =  2
-const   STATE_LEASED_OUT  		=  3
+const   STATE_LEASED_OUT 		=  3
 const   STATE_BEING_SCRAPPED  	=  4
 
 //==============================================================================================================================
@@ -144,15 +144,14 @@ func (t *Chaincode) get_ecert(stub *shim.ChaincodeStub, name string) ([]byte, er
 	return []byte(string(cert.OK)), nil
 }
 
-
 //==============================================================================================================================
-//	 create_vehicle_log - Invokes the function of vehicle_log_code chaincode with the name 'chaincodeName' to log an
-//					vehicle_log.
+//	 create_log - Invokes the function of event_code chaincode with the name 'chaincodeName' to log an
+//					event.
 //==============================================================================================================================
-func (t *Chaincode) create_vehicle_log(stub *shim.ChaincodeStub, args []string) ([]byte, error) {	
+func (t *Chaincode) create_log(stub *shim.ChaincodeStub, args []string) ([]byte, error) {	
 																						
-	chaincode_name := "2948357a4677170ecee30d8fa5627594f44c28b8e4e77845730c079592e8ad18a7376ab7bae0e559f97e2dd020749ddc5b9fa2350ca0bc64ac0f9fa223ad244c"
-	chaincode_function := "create_vehicle_log"																																									
+	chaincode_name := "2b93a8cdcbec1ef4909071fd85531fcf3ef21db17343568a73916bad010966913c480475864a6da4e3193bbd2300c9fe140bcf3bf8fa675aba078632a7564456"
+	chaincode_function := "create_log"																																									
 	chaincode_arguments := args
 	
 	_, err := stub.InvokeChaincode(chaincode_name, chaincode_function, chaincode_arguments)
@@ -354,8 +353,8 @@ func (t *Chaincode) create_vehicle(stub *shim.ChaincodeStub, caller_name string,
 			
 																		if err != nil { return nil, err }
 	
-	_, err  = t.create_vehicle_log(stub,[]string{ "Create",					// Type of vehicle_log 
-											"Create V5C",				// vehicle_log text
+	_, err  = t.create_log(stub,[]string{ "Create",					// Type of event 
+											"Create V5C",				// Event text
 											v.V5cID, caller_name})		// Which car and who caused it
 	
 																		if err != nil { return nil, err }
@@ -390,9 +389,9 @@ func (t *Chaincode) authority_to_manufacturer(stub *shim.ChaincodeStub, v Vehicl
 
 															if err != nil {	return nil, err	}
 	
-															// Log the vehicle_log
+															// Log the Event
 														
-	_, err  = t.create_vehicle_log(stub,[]string{ "Transfer", 																					// Type of vehicle_log 
+	_, err  = t.create_log(stub,[]string{ "Transfer", 																					// Type of event 
 											caller_name + " → " + recipient_name + 															// From -> To
 											"&&[" + strconv.Itoa(v.VIN) + "] " + v.Make + " " + v.Model + ", " + v.Colour + ", " + v.Reg, 	// Vehicle Details
 											v.V5cID, caller_name, recipient_name})																			// Which car and who caused it
@@ -434,7 +433,7 @@ func (t *Chaincode) manufacturer_to_private(stub *shim.ChaincodeStub, v Vehicle,
 	
 															if err != nil { return nil, err }
 	
-	_, err  = t.create_vehicle_log(stub,[]string{ "Transfer",
+	_, err  = t.create_log(stub,[]string{ "Transfer",
 										   caller_name + " → " + recipient_name + 
 										   "&&[" + strconv.Itoa(v.VIN) + "] " + v.Make + " " + v.Model + ", " + v.Colour + ", " + v.Reg, 
 										   v.V5cID, caller_name, recipient_name})
@@ -468,7 +467,7 @@ func (t *Chaincode) private_to_private(stub *shim.ChaincodeStub, v Vehicle, curr
 	
 															if err != nil { return nil, err }
 	
-	_, err  = t.create_vehicle_log(stub,[]string{ "Transfer", 
+	_, err  = t.create_log(stub,[]string{ "Transfer", 
 											caller_name + " → " + recipient_name + 
 											"&&[" + strconv.Itoa(v.VIN) + "] " + v.Make + " " + v.Model + ", " + v.Colour + ", " + v.Reg,
 											v.V5cID, caller_name, recipient_name})
@@ -502,7 +501,7 @@ func (t *Chaincode) private_to_lease_company(stub *shim.ChaincodeStub, v Vehicle
 	
 															if err != nil { return nil, err }
 	
-	_, err  = t.create_vehicle_log(stub,[]string{ "Transfer", 
+	_, err  = t.create_log(stub,[]string{ "Transfer", 
 											caller_name + " → " + recipient_name + 
 											"&&[" + strconv.Itoa(v.VIN) + "] " + v.Make + " " + v.Model + ", " + v.Colour + ", " + v.Reg, 
 											v.V5cID, caller_name, recipient_name})
@@ -536,7 +535,7 @@ func (t *Chaincode) lease_company_to_private(stub *shim.ChaincodeStub, v Vehicle
 	
 															if err != nil { return nil, err }
 	
-	_, err  = t.create_vehicle_log(stub,[]string{ "Transfer", 
+	_, err  = t.create_log(stub,[]string{ "Transfer", 
 											caller_name + " → " + recipient_name + 
 											"&&[" + strconv.Itoa(v.VIN) + "] " + v.Make + " " + v.Model + ", " + v.Colour + ", " + v.Reg, 
 											v.V5cID, caller_name, recipient_name})
@@ -571,7 +570,7 @@ func (t *Chaincode) private_to_scrap_merchant(stub *shim.ChaincodeStub, v Vehicl
 	
 															if err != nil { return nil, err }
 	
-	_, err  = t.create_vehicle_log(stub,[]string{ "Transfer",
+	_, err  = t.create_log(stub,[]string{ "Transfer",
 											caller_name + " → " + recipient_name + 
 											"&&[" + strconv.Itoa(v.VIN) + "] " + v.Make + " " + v.Model + ", " + v.Colour + ", " + v.Reg, 
 											v.V5cID, caller_name, recipient_name})
@@ -612,8 +611,8 @@ func (t *Chaincode) update_vin(stub *shim.ChaincodeStub, v Vehicle, current_owne
 	
 															if err != nil { return nil, err } 
 	
-	_, err  = t.create_vehicle_log(stub,[]string{ "Update",											// vehicle_log type
-											"VIN: "+strconv.Itoa(old_value)+" → "+new_value,	// vehicle_log text FIELD: OLDVAL -> NEWVAL
+	_, err  = t.create_log(stub,[]string{ "Update",											// event type
+											"VIN: "+strconv.Itoa(old_value)+" → "+new_value,	// event text FIELD: OLDVAL -> NEWVAL
 											v.V5cID, caller_name})								// Which vehicle and who by
 	
 															if err != nil { return nil, err }
@@ -644,7 +643,7 @@ func (t *Chaincode) update_registration(stub *shim.ChaincodeStub, v Vehicle, cur
 	
 															if err != nil { return nil, err }
 	
-	_, err  = t.create_vehicle_log(stub,[]string{ "Update",
+	_, err  = t.create_log(stub,[]string{ "Update",
 											"Registration: "+string(old_value)+" → "+new_value,
 											v.V5cID, caller_name})
 	
@@ -675,7 +674,7 @@ func (t *Chaincode) update_colour(stub *shim.ChaincodeStub, v Vehicle, current_o
 	
 															if err != nil { return nil, err }
 	
-	_, err  = t.create_vehicle_log(stub,[]string{ "Update",
+	_, err  = t.create_log(stub,[]string{ "Update",
 											"Colour: "+old_value+" → "+new_value,
 											v.V5cID, caller_name})
 	
@@ -708,7 +707,7 @@ func (t *Chaincode) update_make(stub *shim.ChaincodeStub, v Vehicle, current_own
 	
 															if err != nil { return nil, err }
 	
-	_, err  = t.create_vehicle_log(stub,[]string{ "Update",
+	_, err  = t.create_log(stub,[]string{ "Update",
 											"Make: "+old_value+" → "+new_value,
 											v.V5cID, caller_name})
 	
@@ -740,7 +739,7 @@ func (t *Chaincode) update_model(stub *shim.ChaincodeStub, v Vehicle, current_ow
 	
 															if err != nil { return nil, err }
 	
-	_, err  = t.create_vehicle_log(stub,[]string{ "Update", 
+	_, err  = t.create_log(stub,[]string{ "Update", 
 											"Model: "+old_value+" → "+new_value,
 											v.V5cID, caller_name})
 											
@@ -770,7 +769,7 @@ func (t *Chaincode) scrap_vehicle(stub *shim.ChaincodeStub, v Vehicle, current_o
 	
 															if err != nil { return nil, err }
 	
-	_, err  = t.create_vehicle_log(stub,[]string{ "Scrap", 
+	_, err  = t.create_log(stub,[]string{ "Scrap", 
 											"Scrap V5C", 
 											v.V5cID, caller_name})
 											
