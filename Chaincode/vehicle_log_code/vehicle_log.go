@@ -45,10 +45,10 @@ type ECertResponse struct {
 	OK string `json:"OK"`
 }	
 
-const   ROLE_AUTHORITY      =  4
-const   ROLE_MANUFACTURER   =  1
-const   ROLE_PRIVATE_ENTITY =  2
-const   ROLE_LEASE_COMPANY  =  3
+const   ROLE_AUTHORITY      =  1
+const   ROLE_MANUFACTURER   =  2
+const   ROLE_PRIVATE_ENTITY =  4
+const   ROLE_LEASE_COMPANY  =  8
 const   ROLE_SCRAP_MERCHANT =  0
 
 //==============================================================================================================================
@@ -79,7 +79,7 @@ func (t *Chaincode) get_ecert(stub *shim.ChaincodeStub, name string) ([]byte, er
 	
 	var cert ECertResponse
 	
-	response, err := http.Get("http://169.44.63.218:32985/registrar/"+name+"/ecert") // Calls out to the HyperLedger REST API to get the ecert of the user with that name
+	response, err := http.Get("http://169.44.63.199:35285/registrar/"+name+"/ecert") // Calls out to the HyperLedger REST API to get the ecert of the user with that name
     
 															if err != nil { return nil, errors.New("Could not get ecert") }
 	
