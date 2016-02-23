@@ -17,10 +17,10 @@ import (
 	"regexp"
 )
 
-const   ROLE_AUTHORITY      =  4
-const   ROLE_MANUFACTURER   =  1
-const   ROLE_PRIVATE_ENTITY =  2
-const   ROLE_LEASE_COMPANY  =  3
+const   ROLE_AUTHORITY      =  1
+const   ROLE_MANUFACTURER   =  2
+const   ROLE_PRIVATE_ENTITY =  4
+const   ROLE_LEASE_COMPANY  =  8
 const   ROLE_SCRAP_MERCHANT =  0
 
 const   STATE_TEMPLATE  		=  0
