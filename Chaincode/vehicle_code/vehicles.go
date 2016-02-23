@@ -21,7 +21,7 @@ const   ROLE_AUTHORITY      =  1
 const   ROLE_MANUFACTURER   =  2
 const   ROLE_PRIVATE_ENTITY =  4
 const   ROLE_LEASE_COMPANY  =  8
-const   ROLE_SCRAP_MERCHANT =  8
+const   ROLE_SCRAP_MERCHANT =  0
 
 const   STATE_TEMPLATE  		=  0
 const   STATE_MANUFACTURE  		=  1
@@ -128,7 +128,7 @@ func (t *Chaincode) get_ecert(stub *shim.ChaincodeStub, name string) ([]byte, er
 	
 	var cert ECertResponse
 	
-	response, err := http.Get("http://169.44.63.218:32985/registrar/"+name+"/ecert") // Calls out to the HyperLedger REST API to get the ecert of the user with that name
+	response, err := http.Get("http://169.44.63.199:35285/registrar/"+name+"/ecert") // Calls out to the HyperLedger REST API to get the ecert of the user with that name
     
 															if err != nil { return nil, errors.New("Could not get ecert") }
 	
@@ -791,7 +791,7 @@ func (t *Chaincode) get_all(stub *shim.ChaincodeStub, v Vehicle, current_owner s
 																if err != nil { return nil, errors.New("Invalid vehicle object") }
 	
 	if 		current_owner == caller_name ||
-			caller_role   == 0 		   		{
+			caller_role   == ROLE_AUTHORITY 		{
 	
 					return bytes, nil
 		
