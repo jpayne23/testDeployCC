@@ -128,7 +128,7 @@ func (t *Chaincode) get_ecert(stub *shim.ChaincodeStub, name string) ([]byte, er
 	
 	var cert ECertResponse
 	
-	response, err := http.Get("http://169.44.63.207:32861/registrar/"+name+"/ecert") // Calls out to the HyperLedger REST API to get the ecert of the user with that name
+	response, err := http.Get("http://169.44.38.116:33981/registrar/"+name+"/ecert") // Calls out to the HyperLedger REST API to get the ecert of the user with that name
     
 															if err != nil { return nil, errors.New("Could not get ecert") }
 	
@@ -150,7 +150,7 @@ func (t *Chaincode) get_ecert(stub *shim.ChaincodeStub, name string) ([]byte, er
 //==============================================================================================================================
 func (t *Chaincode) create_log(stub *shim.ChaincodeStub, args []string) ([]byte, error) {	
 																						
-	chaincode_name := "600aa713e10722300ddce40749a3e607707e557e4e2c742094bb4b0dc6553d9052e5e98411820510cd1532e5c87b571205fb92551e709ba874c0bb0d78f337f7"
+	chaincode_name := "398f2e9a632d17bfc54f259f581818448a1f7b654901ce1648a66c36f0003b2ece440382e585d6b7dac8ee010f2b4fae29bda3135cf76d9c3895cacec1ffbeb4"
 	chaincode_function := "create_log"																																									
 	chaincode_arguments := args
 
