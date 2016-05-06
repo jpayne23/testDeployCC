@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"time"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"errors"
 	"strings"
@@ -147,7 +146,7 @@ func (t *SimpleChaincode) create_vehicle_log(stub *shim.ChaincodeStub, vehicle_l
 	var e Vehicle_Log
 	
 	e.Name 	 = vehicle_log_name
-	e.Time	 = time.Now().Format("02/01/2006 15:04:05")
+	e.Time	 = "12 o'Clock Sir"
 	e.Text	 = vehicle_log_text
 	e.Obj_ID = vehicle_log_obj_id
 	e.Users	 = vehicle_log_users
