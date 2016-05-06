@@ -61,6 +61,16 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 
 	var eh Vehicle_Log_Holder
 	
+	var e Vehicle_Log
+	
+	e.Name 	 = "Joe"
+	e.Time	 = "12 o'Clock Sir"
+	e.Text	 = "Test"
+	e.Obj_ID = "ABC123"
+	e.Users	 = []string("Andy", "Joe")
+	
+	eh.Vehicle_Log_Holder = append(eh.Vehicle_Log_Holder, e)
+	
 	bytes, err := json.Marshal(eh)
 	
 															if err != nil { return nil, errors.New("Error creating vehicle_log record") }
@@ -190,13 +200,6 @@ func (t *SimpleChaincode) get_vehicle_logs(stub *shim.ChaincodeStub, args []stri
 	
 																			if err != nil {	return nil, errors.New("Corrupt vehicle log") }
 															
-	//ecert, err := t.get_ecert(stub, args[0])
-	
-																			if err != nil {	return nil, err }
-																	
-	//role, err := t.check_role(stub,[]string{string(ecert)})
-	
-																			if err != nil { return nil, err }
 																	
 	repNull := strings.Replace(string(bytes), "null", "[]", 1)		// If the array is blank it has the json value null so we need to make it an empty array
 	
