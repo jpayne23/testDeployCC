@@ -65,7 +65,7 @@ type ECertResponse struct {
 //==============================================================================================================================
 //	Init Function - Called when the user deploys the chaincode																	
 //==============================================================================================================================
-func (t *Chaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+func (t *Chaincode) Init(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 	
 	//Args
 	//				0					1
@@ -245,58 +245,56 @@ func (t *Chaincode) save_changes(stub *shim.ChaincodeStub, v Vehicle) (bool, err
 //	Run - Called on chaincode invoke. Takes a function name passed and calls that function. Converts some
 //		  initial arguments passed to other things for use in the called function e.g. name -> ecert
 //==============================================================================================================================
-func (t *Chaincode) Run(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
-	if function == "init" {
-		return t.init(stub, args)
-	} else {
+func (t *Chaincode) Invoke(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	
-		caller_ecert, caller_role, err := t.get_user_data(stub, args[0]) 													// Get the details of the caller
-		
-																							if err != nil { return nil, err }
-		
-		if function == "create_vehicle" { return t.create_vehicle(stub, args[0], caller_ecert, caller_role, args[1])
-		} else { 																				// If the function is not a create then there must be a car so we need to retrieve the car.
-			
-			argPos := 2
-			
-			if function == "scrap_vehicle" {																// If its a scrap vehicle then only two arguments are passed (no update value) all others have three arguments and the v5cID is expected in the last argument
-				argPos = 1
-			}
-			
-			v, err := t.retrieve_v5c(stub, args[argPos])
-			
-																						    	if err != nil { return nil, err }
-																							
-			current_owner, err := t.get_owner(stub, v)
 	
-																							if err != nil { return nil, err }
+	caller_ecert, caller_role, err := t.get_user_data(stub, args[0]) 													// Get the details of the caller
+	
+																						if err != nil { return nil, err }
+	
+	if function == "create_vehicle" { return t.create_vehicle(stub, args[0], caller_ecert, caller_role, args[1])
+	} else { 																				// If the function is not a create then there must be a car so we need to retrieve the car.
 		
-			if strings.Contains(function, "update") == false           && 
-			   function 							!= "scrap_vehicle"    { 									// If the function is not an update or a scrappage it must be a transfer so we need to get the ecert of the recipient.
-				
-					recipient_ecert, recipient_role, err := t.get_user_data(stub, args[1])										// Get the details of the recipient
-					
-																							if err != nil {	return nil, err }
-					
-					if 		   function == "authority_to_manufacturer" { return t.authority_to_manufacturer(stub, v, current_owner, args[0], caller_ecert, caller_role, args[1], recipient_ecert, recipient_role)
-					} else if  function == "manufacturer_to_private"   { return t.manufacturer_to_private(stub, v, current_owner, args[0], caller_ecert, caller_role, args[1], recipient_ecert, recipient_role)
-					} else if  function == "private_to_private" 	   { return t.private_to_private(stub, v, current_owner, args[0], caller_ecert, caller_role, args[1], recipient_ecert, recipient_role)
-					} else if  function == "private_to_lease_company"  { return t.private_to_lease_company(stub, v, current_owner, args[0], caller_ecert, caller_role, args[1], recipient_ecert, recipient_role)
-					} else if  function == "lease_company_to_private"  { return t.lease_company_to_private(stub, v, current_owner, args[0], caller_ecert, caller_role, args[1], recipient_ecert, recipient_role)
-					} else if  function == "private_to_scrap_merchant" { return t.private_to_scrap_merchant(stub, v, current_owner, args[0], caller_ecert, caller_role, args[1], recipient_ecert, recipient_role)
-					}
-				
-			} else if function == "update_make"  	    { return t.update_make(stub, v, current_owner, args[0], caller_ecert, caller_role, args[1])
-			} else if function == "update_model"        { return t.update_model(stub, v, current_owner, args[0], caller_ecert, caller_role, args[1])
-			} else if function == "update_registration" { return t.update_registration(stub, v, current_owner, args[0], caller_ecert, caller_role, args[1])
-			} else if function == "update_vin" 			{ return t.update_vin(stub, v, current_owner, args[0], caller_ecert, caller_role, args[1])
-			} else if function == "update_colour" 		{ return t.update_colour(stub, v, current_owner, args[0], caller_ecert, caller_role, args[1])
-			} else if function == "scrap_vehicle" 		{ return t.scrap_vehicle(stub, v, current_owner, args[0], caller_ecert, caller_role) }
-			
-																							return nil, errors.New("Function of that name doesn't exist.")
-				
+		argPos := 2
+		
+		if function == "scrap_vehicle" {																// If its a scrap vehicle then only two arguments are passed (no update value) all others have three arguments and the v5cID is expected in the last argument
+			argPos = 1
 		}
+		
+		v, err := t.retrieve_v5c(stub, args[argPos])
+		
+																							if err != nil { return nil, err }
+																						
+		current_owner, err := t.get_owner(stub, v)
+
+																						if err != nil { return nil, err }
+	
+		if strings.Contains(function, "update") == false           && 
+		   function 							!= "scrap_vehicle"    { 									// If the function is not an update or a scrappage it must be a transfer so we need to get the ecert of the recipient.
+			
+				recipient_ecert, recipient_role, err := t.get_user_data(stub, args[1])										// Get the details of the recipient
+				
+																						if err != nil {	return nil, err }
+				
+				if 		   function == "authority_to_manufacturer" { return t.authority_to_manufacturer(stub, v, current_owner, args[0], caller_ecert, caller_role, args[1], recipient_ecert, recipient_role)
+				} else if  function == "manufacturer_to_private"   { return t.manufacturer_to_private(stub, v, current_owner, args[0], caller_ecert, caller_role, args[1], recipient_ecert, recipient_role)
+				} else if  function == "private_to_private" 	   { return t.private_to_private(stub, v, current_owner, args[0], caller_ecert, caller_role, args[1], recipient_ecert, recipient_role)
+				} else if  function == "private_to_lease_company"  { return t.private_to_lease_company(stub, v, current_owner, args[0], caller_ecert, caller_role, args[1], recipient_ecert, recipient_role)
+				} else if  function == "lease_company_to_private"  { return t.lease_company_to_private(stub, v, current_owner, args[0], caller_ecert, caller_role, args[1], recipient_ecert, recipient_role)
+				} else if  function == "private_to_scrap_merchant" { return t.private_to_scrap_merchant(stub, v, current_owner, args[0], caller_ecert, caller_role, args[1], recipient_ecert, recipient_role)
+				}
+			
+		} else if function == "update_make"  	    { return t.update_make(stub, v, current_owner, args[0], caller_ecert, caller_role, args[1])
+		} else if function == "update_model"        { return t.update_model(stub, v, current_owner, args[0], caller_ecert, caller_role, args[1])
+		} else if function == "update_registration" { return t.update_registration(stub, v, current_owner, args[0], caller_ecert, caller_role, args[1])
+		} else if function == "update_vin" 			{ return t.update_vin(stub, v, current_owner, args[0], caller_ecert, caller_role, args[1])
+		} else if function == "update_colour" 		{ return t.update_colour(stub, v, current_owner, args[0], caller_ecert, caller_role, args[1])
+		} else if function == "scrap_vehicle" 		{ return t.scrap_vehicle(stub, v, current_owner, args[0], caller_ecert, caller_role) }
+		
+																						return nil, errors.New("Function of that name doesn't exist.")
+			
 	}
+	
 }
 //=================================================================================================================================	
 //	Query - Called on chaincode query. Takes a function name passed and calls that function. Passes the

@@ -54,7 +54,7 @@ const   ROLE_SCRAP_MERCHANT =  5
 //==============================================================================================================================
 //	Init Function - Called when the user deploys the chaincode sets up base vehicle_logs (blank array)																
 //==============================================================================================================================
-func (t *Chaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+func (t *Chaincode) Init(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 
 	//Args
 	//				0
@@ -265,11 +265,10 @@ func (t *Chaincode) get_users_vehicle_logs(stub *shim.ChaincodeStub, eh Vehicle_
 //==============================================================================================================================
 //	Run - Called on chaincode invoke. Takes a function name passed and calls that function.
 //==============================================================================================================================
-func (t *Chaincode) Run(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
+func (t *Chaincode) Invoke(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	// Handle different functions
-	if function == "init" { return t.init(stub, args) 
-	} else if function == "create_vehicle_log" {
+	if function == "create_vehicle_log" {
 		if(len(args) < 4) {
 			return nil, errors.New("Invalid number of arguments supplied")
 		}
