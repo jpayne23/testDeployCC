@@ -55,7 +55,7 @@ const   ROLE_SCRAP_MERCHANT =  5
 //==============================================================================================================================
 func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
-	//Args
+	//Args [None (temporarily)]
 	//				0
 	//			peer_address
 
@@ -79,9 +79,9 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	
 															if err != nil { return nil, errors.New("Error creating blank vehicle_log array") }
 
-	err = stub.PutState("Peer_Address", []byte(args[0]))
+	//err = stub.PutState("Peer_Address", []byte(args[0]))
 	
-															if err != nil { return nil, errors.New("Error storing peer address") }
+															//if err != nil { return nil, errors.New("Error storing peer address") }
 
 	return nil, nil
 }
