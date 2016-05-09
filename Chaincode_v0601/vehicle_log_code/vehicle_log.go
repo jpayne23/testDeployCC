@@ -55,21 +55,11 @@ const   ROLE_SCRAP_MERCHANT =  5
 //==============================================================================================================================
 func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
-	//Args [None (temporarily)]
+	//Args
 	//				0
 	//			peer_address
 
 	var eh Vehicle_Log_Holder
-	
-	var e Vehicle_Log
-	
-	e.Name 	 = "Joe"
-	e.Time	 = "12 o'Clock Sir"
-	e.Text	 = "Test"
-	e.Obj_ID = "ABC123"
-	e.Users	 = []string("Andy", "Joe")
-	
-	eh.Vehicle_Log_Holder = append(eh.Vehicle_Log_Holder, e)
 	
 	bytes, err := json.Marshal(eh)
 	
@@ -99,7 +89,7 @@ func (t *SimpleChaincode) get_ecert(stub *shim.ChaincodeStub, name string) ([]by
 	peer_address, err := stub.GetState("Peer_Address")
 															if err != nil { return nil, errors.New("Error retrieving peer address") }
 
-	response, err := http.Get("https://"+string(peer_address)+"/registrar/"+name+"/ecert") 	// Calls out to the HyperLedger REST API to get the ecert of the user with that name
+	response, err := http.Get("http://"+string(peer_address)+"/registrar/"+name+"/ecert") 	// Calls out to the HyperLedger REST API to get the ecert of the user with that name
     
 															if err != nil { return nil, errors.New("Error calling ecert API") }
 	
@@ -156,7 +146,7 @@ func (t *SimpleChaincode) create_vehicle_log(stub *shim.ChaincodeStub, vehicle_l
 	var e Vehicle_Log
 	
 	e.Name 	 = vehicle_log_name
-	e.Time	 = "12 o'Clock Sir"
+	e.Time	 = "02/01/2006 15:04:05"
 	e.Text	 = vehicle_log_text
 	e.Obj_ID = vehicle_log_obj_id
 	e.Users	 = vehicle_log_users
@@ -200,10 +190,25 @@ func (t *SimpleChaincode) get_vehicle_logs(stub *shim.ChaincodeStub, args []stri
 	
 																			if err != nil {	return nil, errors.New("Corrupt vehicle log") }
 															
-																	
-	repNull := strings.Replace(string(bytes), "null", "[]", 1)		// If the array is blank it has the json value null so we need to make it an empty array
+	//ecert, err := t.get_ecert(stub, args[0])
 	
+																			//if err != nil {	return nil, err }
+																	
+	//role, err := t.check_role(stub,[]string{string(ecert)})
+	
+																			//if err != nil { return nil, err }
+																	
+	//if role == ROLE_AUTHORITY {								// Return all vehicle logs if authority
+			
+	repNull := strings.Replace(string(bytes), "null", "[]", 1)		// If the array is blank it has the json value null so we need to make it an empty array
+
 	return []byte(repNull), nil
+	
+	//} else {
+	
+		//return t.get_users_vehicle_logs(stub, eh, args[0])
+		
+	//}
 	
 }
 
