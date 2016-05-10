@@ -69,9 +69,9 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	
 															if err != nil { return nil, errors.New("Error creating blank vehicle_log array") }
 
-	//err = stub.PutState("Peer_Address", []byte(args[0]))
+	err = stub.PutState("Peer_Address", []byte(args[0]))
 	
-															//if err != nil { return nil, errors.New("Error storing peer address") }
+															if err != nil { return nil, errors.New("Error storing peer address") }
 
 	return nil, nil
 }
@@ -190,25 +190,25 @@ func (t *SimpleChaincode) get_vehicle_logs(stub *shim.ChaincodeStub, args []stri
 	
 																			if err != nil {	return nil, errors.New("Corrupt vehicle log") }
 															
-	//ecert, err := t.get_ecert(stub, args[0])
+	ecert, err := t.get_ecert(stub, args[0])
 	
-																			//if err != nil {	return nil, err }
+																			if err != nil {	return nil, err }
 																	
-	//role, err := t.check_role(stub,[]string{string(ecert)})
+	role, err := t.check_role(stub,[]string{string(ecert)})
 	
-																			//if err != nil { return nil, err }
+																			if err != nil { return nil, err }
 																	
-	//if role == ROLE_AUTHORITY {								// Return all vehicle logs if authority
+	if role > ROLE_AUTHORITY {								// Return all vehicle logs if authority
 			
-	repNull := strings.Replace(string(bytes), "null", "[]", 1)		// If the array is blank it has the json value null so we need to make it an empty array
+		repNull := strings.Replace(string(bytes), "null", "[]", 1)		// If the array is blank it has the json value null so we need to make it an empty array
 
-	return []byte(repNull), nil
+		return []byte(repNull), nil
 	
-	//} else {
+	} else {
 	
-		//return t.get_users_vehicle_logs(stub, eh, args[0])
+		return t.get_users_vehicle_logs(stub, eh, args[0])
 		
-	//}
+	}
 	
 }
 
