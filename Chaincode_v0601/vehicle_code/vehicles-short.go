@@ -213,19 +213,19 @@ func (t *SimpleChaincode) create_vehicle(stub *shim.ChaincodeStub, caller_name s
 	
 																		if err != nil { return nil, errors.New("Invalid JSON object") }
 
-	//record, err := stub.GetState(v.V5cID) 								// If not an error then a record exists so cant create a new car with this V5cID as it must be unique
+	record, err := stub.GetState(v.V5cID) 								// If not an error then a record exists so cant create a new car with this V5cID as it must be unique
 	
-																		//if record != nil { return nil, errors.New("Vehicle already exists") }
+																		if record != nil { return nil, errors.New("Vehicle already exists") }
 	
 	_, err  = t.save_changes(stub, v)									
 			
 																		if err != nil { return nil, err }
 																		
-	_, err  = t.create_log(stub,[]string{ "Create",								// Type of event 
-											"Create V5C",		// Event text
-											v.V5cID, caller_name})	// Which car and who caused it
+	//_, err  = t.create_log(stub,[]string{ "Create",								// Type of event 
+	//										"Create V5C",		// Event text
+	//										v.V5cID, caller_name})	// Which car and who caused it
 	
-																		if err != nil { return nil, err }																	
+	//																	if err != nil { return nil, err }																	
 	
 	return nil, nil
 
