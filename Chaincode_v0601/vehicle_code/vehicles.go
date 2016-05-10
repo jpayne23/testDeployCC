@@ -359,11 +359,11 @@ func (t *SimpleChaincode) create_vehicle(stub *shim.ChaincodeStub, caller_name s
 	
 																		if record != nil { return nil, errors.New("Vehicle already exists") }
 	
-	if 		caller_role != ROLE_AUTHORITY {							// Only the regulator can create a new v5c
+	//if 		caller_role != ROLE_AUTHORITY {							// Only the regulator can create a new v5c
 																			
-																		return nil, errors.New("Permission Denied")
+	//																	return nil, errors.New("Permission Denied")
 	
-	}
+	//}
 	
 	_, err  = t.save_changes(stub, v)									
 			
@@ -807,7 +807,7 @@ func (t *SimpleChaincode) get_all(stub *shim.ChaincodeStub, v Vehicle, current_o
 																if err != nil { return nil, errors.New("Invalid vehicle object") }
 	
 	if 		current_owner == caller_name ||
-			caller_role   == 0 		   		{
+			caller_role   == ROLE_AUTHORITY	   		{
 	
 					return bytes, nil
 		
