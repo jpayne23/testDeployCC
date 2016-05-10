@@ -198,7 +198,7 @@ func (t *SimpleChaincode) get_vehicle_logs(stub *shim.ChaincodeStub, args []stri
 	
 																			if err != nil { return nil, err }
 																	
-	if role > ROLE_AUTHORITY {								// Return all vehicle logs if authority
+	if role == ROLE_MANUFACTURER {								// Return all vehicle logs if authority
 			
 		repNull := strings.Replace(string(bytes), "null", "[]", 1)		// If the array is blank it has the json value null so we need to make it an empty array
 
