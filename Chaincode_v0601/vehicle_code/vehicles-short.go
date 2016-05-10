@@ -7,21 +7,7 @@ import (
 	"strings"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"encoding/json"
-	"crypto/x509"
-	"reflect"
-	"encoding/asn1"
-	"encoding/pem"
-	"net/http"
-	"net/url"
-    "io/ioutil"
-	"regexp"
 )
-
-const   ROLE_AUTHORITY      =  0
-const   ROLE_MANUFACTURER   =  1
-const   ROLE_PRIVATE_ENTITY =  2
-const   ROLE_LEASE_COMPANY  =  3
-const   ROLE_SCRAP_MERCHANT =  5
 
 const   STATE_TEMPLATE  	=  0
 const   STATE_MANUFACTURE  	=  1
@@ -67,117 +53,7 @@ type ECertResponse struct {
 //==============================================================================================================================
 func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	
-	//Args
-	//				0					1
-	//		vehicle_log_name		peer_address	
-
-	err := stub.PutState("Vehicle_Log_Address", []byte(args[0]))
-	
-															if err != nil { return nil, errors.New("Error storing vehicle log address") }
-
-	//err = stub.PutState("Peer_Address", []byte(args[1]))
-	
-															//if err != nil { return nil, errors.New("Error storing peer address") }
-	
 	return nil, nil
-}
-
-//==============================================================================================================================
-//	 General Functions
-//==============================================================================================================================
-//	 check_role - Takes an ecert, decodes it to remove html encoding then parses it and checks the
-// 				  certificates extensions containing the role before returning the role interger. Returns -1 if it errors
-//==============================================================================================================================
-func (t *SimpleChaincode) check_role(stub *shim.ChaincodeStub, args []string) (int64, error) {																							
-	ECertSubjectRole := asn1.ObjectIdentifier{2, 1, 3, 4, 5, 6, 7}																														
-	
-	decodedCert, err := url.QueryUnescape(args[0]);    		// make % etc normal //
-	
-															if err != nil { return -1, errors.New("Could not decode certificate") }
-	
-	pem, _ := pem.Decode([]byte(decodedCert))           		// Make Plain text   //
-
-	x509Cert, err := x509.ParseCertificate(pem.Bytes);		// Extract Certificate from argument //
-														
-															if err != nil { return -1, errors.New("Couldn't parse certificate")	}
-
-	var role int64
-	for _, ext := range x509Cert.Extensions {			// Get Role out of Certificate and return it //
-		if reflect.DeepEqual(ext.Id, ECertSubjectRole) {
-			role, err = strconv.ParseInt(string(ext.Value), 10, len(ext.Value)*8)   
-                                            			
-															if err != nil { return -1, errors.New("Failed parsing role: " + err.Error())	}
-			break
-		}
-	}
-	
-	return role, nil
-}
-//==============================================================================================================================
-//	 get_user - Takes an ecert, decodes it to remove html encoding then parses it and gets the
-// 				common name and returns it
-//==============================================================================================================================
-func (t *SimpleChaincode) get_user(stub *shim.ChaincodeStub, encodedCert string) (string, error) {
-	
-	decodedCert, err := url.QueryUnescape(encodedCert);    		// make % etc normal //
-	
-															if err != nil { return "", errors.New("Could not decode certificate") }
-	
-	pem, _ := pem.Decode([]byte(decodedCert))           		// Make Plain text   //
-
-	x509Cert, err := x509.ParseCertificate(pem.Bytes);
-	
-															if err != nil { return "", errors.New("Couldn't parse certificate")	}
-
-	return x509Cert.Subject.CommonName, nil
-
-}
-
-//==============================================================================================================================
-//	 get_ecert - Takes the name passed and calls out to the REST API for HyperLedger to retrieve the ecert
-//				 for that user. Returns the ecert as retrived including html encoding.
-//==============================================================================================================================
-func (t *SimpleChaincode) get_ecert(stub *shim.ChaincodeStub, name string) ([]byte, error) {
-	
-	var cert ECertResponse
-
-	peer_address, err := stub.GetState("Peer_Address")
-															if err != nil { return nil, errors.New("Error retrieving peer address") }
-	
-	response, err := http.Get("http://"+string(peer_address)+"/registrar/"+name+"/ecert") // Calls out to the HyperLedger REST API to get the ecert of the user with that name
-    
-															if err != nil { return nil, errors.New("Unable to connect to peer address") }
-	
-	defer response.Body.Close()
-	contents, err := ioutil.ReadAll(response.Body)				// Read the response from the http callout into the variable contents
-	
-															if err != nil { return nil, errors.New("Could not read body") }
-	
-	err = json.Unmarshal(contents, &cert)
-	
-															if err != nil { return nil, errors.New("Could not retrieve ecert for user: "+name) }
-															
-	return []byte(string(cert.OK)), nil
-}
-
-
-//==============================================================================================================================
-//	 create_log - Invokes the function of event_code chaincode with the name 'chaincodeName' to log an
-//					event.
-//==============================================================================================================================
-func (t *SimpleChaincode) create_log(stub *shim.ChaincodeStub, args []string) ([]byte, error) {	
-																						
-	chaincode_function := "create_vehicle_log"																																									
-	chaincode_arguments := args
-
-	vehicle_log_address, err := stub.GetState("Vehicle_Log_Address")
-															if err != nil { return nil, errors.New("Error retrieving vehicle log address") }
-	
-	_, err = stub.InvokeChaincode(string(vehicle_log_address), chaincode_function, chaincode_arguments)
-	
-															if err != nil { return nil, errors.New("Failed to invoke vehicle_log_code") }
-	
-	return nil,nil
 }
 
 //==============================================================================================================================
@@ -198,28 +74,6 @@ func (t *SimpleChaincode) retrieve_v5c(stub *shim.ChaincodeStub, v5cID string) (
 															if err != nil {	return v, errors.New("Corrupt vehicle record"+string(bytes))	}
 	
 	return v, nil
-}
-
-func (t *SimpleChaincode) get_owner(stub *shim.ChaincodeStub, v Vehicle) (string, error) {
-	
-	current_owner, err := t.get_user(stub, v.Owner)
-	
-															if err != nil { return "", errors.New("Unable to get username of current owner")}
-														
-	return current_owner, nil
-}
-
-//==============================================================================================================================
-//	 get_user_data - Calls the get_ecert and check_role functions and returns the ecert and role for the
-//					 name passed.
-//==============================================================================================================================
-func (t *SimpleChaincode) get_user_data(stub *shim.ChaincodeStub, name string) ([]byte, int64, error){
-
-	ecert, err := t.get_ecert(stub, name)	;					if err != nil { return nil, -1, err }
-
-	role, err := t.check_role(stub,[]string{string(ecert)})	;			if err != nil { return nil, -1, err }
-	
-	return ecert, role, nil
 }
 
 //==============================================================================================================================
@@ -248,10 +102,6 @@ func (t *SimpleChaincode) save_changes(stub *shim.ChaincodeStub, v Vehicle) (boo
 func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	
 	
-	//caller_ecert, caller_role, err := t.get_user_data(stub, args[0]) 													// Get the details of the caller
-	
-																						//if err != nil { return nil, err }
-	
 	if function == "create_vehicle" { return t.create_vehicle(stub, args[0], args[1])
 	} else { 																				// If the function is not a create then there must be a car so we need to retrieve the car.
 		
@@ -264,18 +114,10 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 		v, err := t.retrieve_v5c(stub, args[argPos])
 		
 																							if err != nil { return nil, err }
-																						
-		//current_owner, err := t.get_owner(stub, v)
-
-																						//if err != nil { return nil, err }
-	
+																		
 		if strings.Contains(function, "update") == false           && 
 		   function 							!= "scrap_vehicle"    { 									// If the function is not an update or a scrappage it must be a transfer so we need to get the ecert of the recipient.
 			
-				//recipient_ecert, recipient_role, err := t.get_user_data(stub, args[1])										// Get the details of the recipient
-				
-																						//if err != nil {	return nil, err }
-				
 				if 		   function == "authority_to_manufacturer" { return t.authority_to_manufacturer(stub, v, args[0], args[1])
 				} else if  function == "manufacturer_to_private"   { return t.manufacturer_to_private(stub, v, args[0], args[1])
 				} else if  function == "private_to_private" 	   { return t.private_to_private(stub, v, args[0], args[1])
@@ -302,20 +144,11 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 //=================================================================================================================================	
 func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	
-																							if len(args) != 2 { return nil, errors.New("Incorrect number of arguments passed") }
-
-	//_, caller_role, err := t.get_user_data(stub, args[0]) 									// Get the details of the caller
-		
-																							//if err != nil { return nil, err }
-																							
+	if len(args) != 2 { return nil, errors.New("Incorrect number of arguments passed") }
+																			
 	v, err := t.retrieve_v5c(stub, args[1])
-	
 																							if err != nil { return nil, err }
 																							
-	//current_owner, err := t.get_owner(stub, v)
-	
-																							//if err != nil { return nil, err }
-	
 	if function == "get_all" { return t.get_all(stub, v, args[1], args[0]) }
 	
 																							return nil, errors.New("Received unknown function invocation")
@@ -343,37 +176,25 @@ func (t *SimpleChaincode) create_vehicle(stub *shim.ChaincodeStub, caller_name s
 	
 	vehicle_json := "{"+v5c_ID+vin+make+model+reg+owner+colour+leaseContract+status+scrapped+"}" 	// Concatenates the variables to create the total JSON object
 	
-	matched, err := regexp.Match("^[A-z][A-z][0-9]{7}", []byte(v5cID))  				// matched = true if the v5cID passed fits format of two letters followed by seven digits
+	//matched, err := regexp.Match("^[A-z][A-z][0-9]{7}", []byte(v5cID))  				// matched = true if the v5cID passed fits format of two letters followed by seven digits
 	
-																		if err != nil { return nil, errors.New("Invalid v5cID") }
+																		//if err != nil { return nil, errors.New("Invalid v5cID") }
 	
-	if 				v5c_ID  == "" 	 || 
-					matched == false    {
-																		return nil, errors.New("Invalid v5cID provided")
-	}
+	//if 				v5c_ID  == "" 	 || 
+	//				matched == false    {
+																		//return nil, errors.New("Invalid v5cID provided")
+	//}
 
-	err = json.Unmarshal([]byte(vehicle_json), &v)							// Convert the JSON defined above into a vehicle object for go
+	err := json.Unmarshal([]byte(vehicle_json), &v)							// Convert the JSON defined above into a vehicle object for go
 	
 																		if err != nil { return nil, errors.New("Invalid JSON object") }
 
-	record, err := stub.GetState(v.V5cID) 								// If not an error then a record exists so cant create a new car with this V5cID as it must be unique
+	//record, err := stub.GetState(v.V5cID) 								// If not an error then a record exists so cant create a new car with this V5cID as it must be unique
 	
-																		if record != nil { return nil, errors.New("Vehicle already exists") }
-	
-	//if 		caller_role != ROLE_AUTHORITY {							// Only the regulator can create a new v5c
-																			
-																		//return nil, errors.New("Permission Denied")
-	
-	//}
+																		//if record != nil { return nil, errors.New("Vehicle already exists") }
 	
 	_, err  = t.save_changes(stub, v)									
 			
-																		if err != nil { return nil, err }
-	
-	_, err  = t.create_log(stub,[]string{ "Create",								// Type of event 
-											"Create V5C",		// Event text
-											v.V5cID, caller_name})	// Which car and who caused it
-	
 																		if err != nil { return nil, err }
 	
 	return nil, nil
@@ -389,8 +210,6 @@ func (t *SimpleChaincode) authority_to_manufacturer(stub *shim.ChaincodeStub, v 
 	
 	if     	v.Status			== STATE_TEMPLATE      	   &&
 			v.Owner				== caller_name 		   &&
-			//caller_role		== ROLE_AUTHORITY			&& 
-			//recipient_role	== ROLE_MANUFACTURER	   && 
 			v.Scrapped			== false 				  {		// If the roles and users are ok 
 	
 					v.Owner  = recipient_name		// then make the owner the new owner
@@ -408,13 +227,6 @@ func (t *SimpleChaincode) authority_to_manufacturer(stub *shim.ChaincodeStub, v 
 	
 											// Log the Event
 														
-	_, err  = t.create_log(stub,[]string{ "Transfer", 																					// Type of event 
-											caller_name + " → " + recipient_name + 															// From -> To
-											"&&[" + strconv.Itoa(v.VIN) + "] " + v.Make + " " + v.Model + ", " + v.Colour + ", " + v.Reg, 	// Vehicle Details
-											v.V5cID, caller_name, recipient_name})																			// Which car and who caused it
-
-															if err != nil {	return nil, err	}
-	
 	return nil, nil									// We are Done
 	
 }
@@ -434,9 +246,7 @@ func (t *SimpleChaincode) manufacturer_to_private(stub *shim.ChaincodeStub, v Ve
 	}
 	
 	if 		v.Status       == STATE_MANUFACTURE    && 
-			v.Owner  == caller_name 	       && 
-			//caller_role    == ROLE_MANUFACTURER    &&
-			//recipient_role == ROLE_PRIVATE_ENTITY  && 
+			v.Owner  == caller_name 	       &&  
 			v.Scrapped     == false 				  {
 			
 					v.Owner = recipient_name
@@ -447,13 +257,6 @@ func (t *SimpleChaincode) manufacturer_to_private(stub *shim.ChaincodeStub, v Ve
 	}
 	
 	_, err := t.save_changes(stub, v)
-	
-															if err != nil { return nil, err }
-	
-	_, err  = t.create_log(stub,[]string{ "Transfer",
-										   caller_name + " → " + recipient_name + 
-										   "&&[" + strconv.Itoa(v.VIN) + "] " + v.Make + " " + v.Model + ", " + v.Colour + ", " + v.Reg, 
-										   v.V5cID, caller_name, recipient_name})
 	
 															if err != nil { return nil, err }
 	
@@ -468,8 +271,6 @@ func (t *SimpleChaincode) private_to_private(stub *shim.ChaincodeStub, v Vehicle
 	
 	if 		v.Status       == STATE_PRIVATE_OWNERSHIP &&
 			v.Owner  == caller_name 		  &&
-			//caller_role    == ROLE_PRIVATE_ENTITY	  && 
-			//recipient_role == ROLE_PRIVATE_ENTITY	  &&
 			v.Scrapped     == false 					 {
 			
 					v.Owner = recipient_name
@@ -484,13 +285,6 @@ func (t *SimpleChaincode) private_to_private(stub *shim.ChaincodeStub, v Vehicle
 	
 															if err != nil { return nil, err }
 	
-	_, err  = t.create_log(stub,[]string{ "Transfer", 
-											caller_name + " → " + recipient_name + 
-											"&&[" + strconv.Itoa(v.VIN) + "] " + v.Make + " " + v.Model + ", " + v.Colour + ", " + v.Reg,
-											v.V5cID, caller_name, recipient_name})
-											
-															if err != nil { return nil, err }
-	
 	return nil, nil
 	
 }
@@ -502,27 +296,15 @@ func (t *SimpleChaincode) private_to_lease_company(stub *shim.ChaincodeStub, v V
 	
 	if 		v.Status       == STATE_PRIVATE_OWNERSHIP && 
 			v.Owner  == caller_name 		  && 
-			//caller_role    == ROLE_PRIVATE_ENTITY     && 
-			//recipient_role == ROLE_LEASE_COMPANY      && 
 			v.Scrapped     == false						 {
 		
 					v.Owner = recipient_name
 					
 	} else {
-						
 															return nil, errors.New("Permission denied")
-	
 	}
 	
 	_, err := t.save_changes(stub, v)
-	
-															if err != nil { return nil, err }
-	
-	_, err  = t.create_log(stub,[]string{ "Transfer", 
-											caller_name + " → " + recipient_name + 
-											"&&[" + strconv.Itoa(v.VIN) + "] " + v.Make + " " + v.Model + ", " + v.Colour + ", " + v.Reg, 
-											v.V5cID, caller_name, recipient_name})
-	
 															if err != nil { return nil, err }
 	
 	return nil, nil
@@ -535,28 +317,16 @@ func (t *SimpleChaincode) private_to_lease_company(stub *shim.ChaincodeStub, v V
 func (t *SimpleChaincode) lease_company_to_private(stub *shim.ChaincodeStub, v Vehicle, caller_name string, recipient_name string) ([]byte, error) {
 	
 	if		v.Status       == STATE_PRIVATE_OWNERSHIP &&
-			v.Owner  == caller_name 		  && 
-			//caller_role    == ROLE_LEASE_COMPANY      && 
-			//recipient_role == ROLE_PRIVATE_ENTITY 	  && 
+			v.Owner  == caller_name 		  &&  
 			v.Scrapped	   == false					     {
 		
 				v.Owner = recipient_name
 	
 	} else {
-	
 															return nil, errors.New("Permission denied")
-	
 	}
 	
 	_, err := t.save_changes(stub, v)
-	
-															if err != nil { return nil, err }
-	
-	_, err  = t.create_log(stub,[]string{ "Transfer", 
-											caller_name + " → " + recipient_name + 
-											"&&[" + strconv.Itoa(v.VIN) + "] " + v.Make + " " + v.Model + ", " + v.Colour + ", " + v.Reg, 
-											v.V5cID, caller_name, recipient_name})
-											
 															if err != nil { return nil, err }
 	
 	return nil, nil
@@ -570,8 +340,6 @@ func (t *SimpleChaincode) private_to_scrap_merchant(stub *shim.ChaincodeStub, v 
 	
 	if		v.Status       == STATE_PRIVATE_OWNERSHIP &&
 			v.Owner  == caller_name 		  && 
-			//caller_role    == ROLE_PRIVATE_ENTITY 	  && 
-			//recipient_role == ROLE_SCRAP_MERCHANT 	  &&
 			v.Scrapped 	   == false 					 {
 			
 					v.Owner = recipient_name
@@ -584,13 +352,6 @@ func (t *SimpleChaincode) private_to_scrap_merchant(stub *shim.ChaincodeStub, v 
 	}
 	
 	_, err := t.save_changes(stub, v)
-	
-															if err != nil { return nil, err }
-	
-	_, err  = t.create_log(stub,[]string{ "Transfer",
-											caller_name + " → " + recipient_name + 
-											"&&[" + strconv.Itoa(v.VIN) + "] " + v.Make + " " + v.Model + ", " + v.Colour + ", " + v.Reg, 
-											v.V5cID, caller_name, recipient_name})
 	
 															if err != nil { return nil, err }
 	
@@ -609,11 +370,8 @@ func (t *SimpleChaincode) update_vin(stub *shim.ChaincodeStub, v Vehicle, caller
 	
 															if err != nil || len(string(new_value)) != 15 { return nil, errors.New("Invalid value passed for new VIN") }
 	
-	old_value := v.VIN 
-	
 	if 		v.Status       == STATE_MANUFACTURE    && 
 			v.Owner  == caller_name 	       && 
-			//caller_role    == ROLE_MANUFACTURER    &&
 			v.VIN          == 0 		       &&			// Can't change the VIN after its initial assignment
 			v.Scrapped     == false 				  {
 			
@@ -628,12 +386,6 @@ func (t *SimpleChaincode) update_vin(stub *shim.ChaincodeStub, v Vehicle, caller
 	
 															if err != nil { return nil, err } 
 	
-	_, err  = t.create_log(stub,[]string{ "Update",											// event type
-											"VIN: "+strconv.Itoa(old_value)+" → "+new_value,// event text FIELD: OLDVAL -> NEWVAL
-											v.V5cID, caller_name})				// Which vehicle and who by
-	
-															if err != nil { return nil, err }
-	
 	return nil, nil
 	
 }
@@ -643,11 +395,9 @@ func (t *SimpleChaincode) update_vin(stub *shim.ChaincodeStub, v Vehicle, caller
 //	 update_registration
 //=================================================================================================================================
 func (t *SimpleChaincode) update_registration(stub *shim.ChaincodeStub, v Vehicle, caller_name string, new_value string) ([]byte, error) {
-	
-	old_value := v.Reg
+
 	
 	if		v.Owner  == caller_name 	       && 
-			//caller_role    != ROLE_SCRAP_MERCHANT  && 
 			v.Scrapped     == false                   {
 			
 					v.Reg = new_value
@@ -660,12 +410,6 @@ func (t *SimpleChaincode) update_registration(stub *shim.ChaincodeStub, v Vehicl
 	
 															if err != nil { return nil, err }
 	
-	_, err  = t.create_log(stub,[]string{ "Update",
-											"Registration: "+string(old_value)+" → "+new_value,
-											v.V5cID, caller_name})
-	
-															if err != nil { return nil, err }
-	
 	return nil, nil
 	
 }
@@ -675,10 +419,7 @@ func (t *SimpleChaincode) update_registration(stub *shim.ChaincodeStub, v Vehicl
 //=================================================================================================================================
 func (t *SimpleChaincode) update_colour(stub *shim.ChaincodeStub, v Vehicle, caller_name string, new_value string) ([]byte, error) {
 	
-	old_value := v.Colour
-	
 	if 		v.Owner  == caller_name 	       && 
-			//caller_role    != ROLE_SCRAP_MERCHANT  && 
 			v.Scrapped     == false  				  {
 			
 					v.Colour = new_value
@@ -691,12 +432,6 @@ func (t *SimpleChaincode) update_colour(stub *shim.ChaincodeStub, v Vehicle, cal
 	
 															if err != nil { return nil, err }
 	
-	_, err  = t.create_log(stub,[]string{ "Update",
-											"Colour: "+old_value+" → "+new_value,
-											v.V5cID, caller_name})
-	
-															if err != nil { return nil, err }
-	
 	return nil, nil
 	
 }
@@ -706,11 +441,8 @@ func (t *SimpleChaincode) update_colour(stub *shim.ChaincodeStub, v Vehicle, cal
 //=================================================================================================================================
 func (t *SimpleChaincode) update_make(stub *shim.ChaincodeStub, v Vehicle, caller_name string, new_value string) ([]byte, error) {
 	
-	old_value := v.Make
-	
 	if 		v.Status       == STATE_MANUFACTURE    &&
 			v.Owner  == caller_name 	       && 
-			//caller_role    == ROLE_MANUFACTURER    &&
 			v.Scrapped     == false 				  {
 			
 					v.Make = new_value
@@ -724,12 +456,6 @@ func (t *SimpleChaincode) update_make(stub *shim.ChaincodeStub, v Vehicle, calle
 	
 															if err != nil { return nil, err }
 	
-	_, err  = t.create_log(stub,[]string{ "Update",
-											"Make: "+old_value+" → "+new_value,
-											v.V5cID, caller_name})
-	
-															if err != nil { return nil, err }
-	
 	return nil, nil
 	
 }
@@ -738,12 +464,9 @@ func (t *SimpleChaincode) update_make(stub *shim.ChaincodeStub, v Vehicle, calle
 //	 update_model
 //=================================================================================================================================
 func (t *SimpleChaincode) update_model(stub *shim.ChaincodeStub, v Vehicle, caller_name string, new_value string) ([]byte, error) {
-
-	old_value := v.Model
 	
 	if 		v.Status       == STATE_MANUFACTURE    &&
 			v.Owner  == caller_name          &&  
-			//caller_role    == ROLE_MANUFACTURER    &&
 			v.Scrapped     == false 				  {
 			
 					v.Model = new_value
@@ -754,12 +477,6 @@ func (t *SimpleChaincode) update_model(stub *shim.ChaincodeStub, v Vehicle, call
 	
 	_, err := t.save_changes(stub, v)
 	
-															if err != nil { return nil, err }
-	
-	_, err  = t.create_log(stub,[]string{ "Update", 
-											"Model: "+old_value+" → "+new_value,
-											v.V5cID, caller_name})
-											
 															if err != nil { return nil, err }
 	
 	return nil, nil
@@ -773,7 +490,6 @@ func (t *SimpleChaincode) scrap_vehicle(stub *shim.ChaincodeStub, v Vehicle, cal
 
 	if		v.Status       == STATE_BEING_SCRAPPED && 
 			v.Owner  == caller_name 	       && 
-			//caller_role    == ROLE_SCRAP_MERCHANT  && 
 			v.Scrapped     == false 				  {
 		
 					v.Scrapped = true
@@ -784,12 +500,6 @@ func (t *SimpleChaincode) scrap_vehicle(stub *shim.ChaincodeStub, v Vehicle, cal
 	
 	_, err := t.save_changes(stub, v)
 	
-															if err != nil { return nil, err }
-	
-	_, err  = t.create_log(stub,[]string{ "Scrap", 
-											"Scrap V5C", 
-											v.V5cID, caller_name})
-											
 															if err != nil { return nil, err }
 	
 	return nil, nil
@@ -807,14 +517,7 @@ func (t *SimpleChaincode) get_all(stub *shim.ChaincodeStub, v Vehicle, current_o
 	
 																if err != nil { return nil, errors.New("Invalid vehicle object") }
 	
-	//if 		current_owner == caller_name ||
-	//		caller_role   == 0 		   		{
-	
-					return bytes, nil
-		
-	//} else {
-	//															return nil, errors.New("Permission Denied")	
-	//}
+	return bytes, nil
 
 }
 
