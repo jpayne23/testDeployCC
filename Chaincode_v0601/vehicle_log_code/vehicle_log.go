@@ -89,7 +89,7 @@ func (t *SimpleChaincode) get_ecert(stub *shim.ChaincodeStub, name string) ([]by
 	peer_address, err := stub.GetState("Peer_Address")
 															if err != nil { return nil, errors.New("Error retrieving peer address") }
 
-	response, err := http.Get("https://"+string(peer_address)+"/registrar/"+name+"/ecert") 	// Calls out to the HyperLedger REST API to get the ecert of the user with that name
+	response, err := http.Get("http://"+string(peer_address)+"/registrar/"+name+"/ecert") 	// Calls out to the HyperLedger REST API to get the ecert of the user with that name
     
 															if err != nil { return nil, errors.New("Error calling ecert API") }
 	
