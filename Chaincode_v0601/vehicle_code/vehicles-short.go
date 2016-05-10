@@ -53,8 +53,32 @@ type ECertResponse struct {
 //==============================================================================================================================
 func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	
+	err := stub.PutState("Vehicle_Log_Address", []byte(args[0]))
+	
+															if err != nil { return nil, errors.New("Error storing vehicle log address") }
+	
 	return nil, nil
 }
+
+//==============================================================================================================================
+//	 create_log - Invokes the function of event_code chaincode with the name 'chaincodeName' to log an
+//					event.
+//==============================================================================================================================
+func (t *SimpleChaincode) create_log(stub *shim.ChaincodeStub, args []string) ([]byte, error) {	
+																						
+	chaincode_function := "create_vehicle_log"																																									
+	chaincode_arguments := args
+
+	vehicle_log_address, err := stub.GetState("Vehicle_Log_Address")
+															if err != nil { return nil, errors.New("Error retrieving vehicle log address") }
+	
+	_, err = stub.InvokeChaincode(string(vehicle_log_address), chaincode_function, chaincode_arguments)
+	
+															if err != nil { return nil, errors.New("Failed to invoke vehicle_log_code") }
+	
+	return nil,nil
+}
+
 
 //==============================================================================================================================
 //	 retrieve_v5c - Gets the state of the data at v5cID in the ledger then converts it from the stored 
@@ -196,6 +220,12 @@ func (t *SimpleChaincode) create_vehicle(stub *shim.ChaincodeStub, caller_name s
 	_, err  = t.save_changes(stub, v)									
 			
 																		if err != nil { return nil, err }
+																		
+	_, err  = t.create_log(stub,[]string{ "Create",								// Type of event 
+											"Create V5C",		// Event text
+											v.V5cID, caller_name})	// Which car and who caused it
+	
+																		if err != nil { return nil, err }																	
 	
 	return nil, nil
 
