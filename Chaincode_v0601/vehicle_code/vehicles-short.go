@@ -56,7 +56,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	
 	err := stub.PutState("Vehicle_Log_Address", []byte(args[0]))
 	
-															if err != nil { return nil, errors.New("Error storing vehicle log address") }
+															if err != nil { fmt.Printf("INIT: Error storing vehicle log address: %s", err); return nil, errors.New("Error storing vehicle log address") }
 	
 	return nil, nil
 }
@@ -71,11 +71,11 @@ func (t *SimpleChaincode) create_log(stub *shim.ChaincodeStub, args []string) ([
 	chaincode_arguments := args
 
 	vehicle_log_address, err := stub.GetState("Vehicle_Log_Address")
-															if err != nil { return nil, errors.New("Error retrieving vehicle log address") }
+															if err != nil { fmt.Printf("CREATE_LOG: Error retrieving vehicle log address: %s", err); return nil, errors.New("Error retrieving vehicle log address") }
 	
 	_, err = stub.InvokeChaincode(string(vehicle_log_address), chaincode_function, chaincode_arguments)
 	
-															if err != nil { return nil, errors.New("Failed to invoke vehicle_log_code") }
+															if err != nil { fmt.Printf("CREATE_LOG: Failed to invoke vehicle_log_code: %s", err); return nil, errors.New("Failed to invoke vehicle_log_code") }
 	
 	return nil,nil
 }
@@ -92,11 +92,11 @@ func (t *SimpleChaincode) retrieve_v5c(stub *shim.ChaincodeStub, v5cID string) (
 
 	bytes, err := stub.GetState(v5cID)	;					
 				
-															if err != nil {	return v, errors.New("Error retrieving vehicle with v5cID = " + v5cID) }
+															if err != nil {	fmt.Printf("RETRIEVE_V5C: Failed to invoke vehicle_log_code: %s", err); return v, errors.New("Error retrieving vehicle with v5cID = " + v5cID) }
 
 	err = json.Unmarshal(bytes, &v)	;						
 
-															if err != nil {	return v, errors.New("Corrupt vehicle record"+string(bytes))	}
+															if err != nil {	fmt.Printf("RETRIEVE_V5C: Corrupt vehicle record "+string(bytes)+": %s", err); return v, errors.New("Corrupt vehicle record"+string(bytes))	}
 	
 	return v, nil
 }
@@ -109,11 +109,11 @@ func (t *SimpleChaincode) save_changes(stub *shim.ChaincodeStub, v Vehicle) (boo
 	 
 	bytes, err := json.Marshal(v)
 	
-																if err != nil { return false, errors.New("Error creating vehicle record") }
+																if err != nil { fmt.Printf("SAVE_CHANGES: Error converting vehicle record: %s", err); return false, errors.New("Error converting vehicle record") }
 
 	err = stub.PutState(v.V5cID, bytes)
 	
-																if err != nil { return false, err }
+																if err != nil { fmt.Printf("SAVE_CHANGES: Error storing vehicle record: %s", err); return false, errors.New("Error storing vehicle record") }
 	
 	return true, nil
 }
@@ -138,7 +138,7 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 		
 		v, err := t.retrieve_v5c(stub, args[argPos])
 		
-																							if err != nil { return nil, err }
+																							if err != nil { fmt.Printf("INVOKE: Error retrieving v5c: %s", err); return nil, errors.New("Error retrieving v5c") }
 																		
 		if strings.Contains(function, "update") == false           && 
 		   function 							!= "scrap_vehicle"    { 									// If the function is not an update or a scrappage it must be a transfer so we need to get the ecert of the recipient.
@@ -169,10 +169,10 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 //=================================================================================================================================	
 func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	
-	if len(args) != 2 { return nil, errors.New("Incorrect number of arguments passed") }
+	if len(args) != 2 { fmt.Printf("Incorrect number of arguments passed"); return nil, errors.New("QUERY: Incorrect number of arguments passed") }
 																			
 	v, err := t.retrieve_v5c(stub, args[1])
-																							if err != nil { return nil, err }
+																							if err != nil { fmt.Printf("QUERY: Error retrieving v5c: %s", err); return nil, errors.New("Error retrieving v5c") }
 																							
 	if function == "get_all" { return t.get_all(stub, v, args[1], args[0]) }
 	
@@ -203,10 +203,11 @@ func (t *SimpleChaincode) create_vehicle(stub *shim.ChaincodeStub, caller_name s
 	
 	matched, err := regexp.Match("^[A-z][A-z][0-9]{7}", []byte(v5cID))  				// matched = true if the v5cID passed fits format of two letters followed by seven digits
 	
-																		if err != nil { return nil, errors.New("Invalid v5cID") }
+																		if err != nil { fmt.Printf("CREATE_VEHICLE: Invalid v5cID: %s", err); return nil, errors.New("Invalid v5cID") }
 	
 	if 				v5c_ID  == "" 	 || 
 					matched == false    {
+																		fmt.Printf("CREATE_VEHICLE: Invalid v5cID provided");
 																		return nil, errors.New("Invalid v5cID provided")
 	}
 
@@ -220,13 +221,11 @@ func (t *SimpleChaincode) create_vehicle(stub *shim.ChaincodeStub, caller_name s
 	
 	_, err  = t.save_changes(stub, v)									
 			
-																		if err != nil { return nil, err }
+																		if err != nil { fmt.Printf("CREATE_VEHICLE: Error saving changes: %s", err); return nil, errors.New("Error saving changes") }
 																		
-	//_, err  = t.create_log(stub,[]string{ "Create",								// Type of event 
-	//										"Create V5C",		// Event text
-	//										v.V5cID, caller_name})	// Which car and who caused it
+	_, err  = t.create_log(stub,[]string{ "Create","Create V5C",v.V5cID, caller_name})	// Which car and who caused it
 	
-	//																	if err != nil { return nil, err }																	
+																		if err != nil { fmt.Printf("CREATE_VEHICLE: Error creating log: %s", err); return nil, errors.New("Error creating log") }																	
 	
 	return nil, nil
 
@@ -248,13 +247,14 @@ func (t *SimpleChaincode) authority_to_manufacturer(stub *shim.ChaincodeStub, v 
 	
 	} else {									// Otherwise if there is an error
 	
+															fmt.Printf("AUTHORITY_TO_MANUFACTURER: Permission Denied");
 															return nil, errors.New("Permission Denied")
 	
 	}
 	
 	_, err := t.save_changes(stub, v)						// Write new state
 
-															if err != nil {	return nil, err	}
+															if err != nil {	fmt.Printf("AUTHORITY_TO_MANUFACTURER: Error saving changes: %s", err); return nil, errors.New("Error saving changes")	}
 	
 											// Log the Event
 														
@@ -272,7 +272,7 @@ func (t *SimpleChaincode) manufacturer_to_private(stub *shim.ChaincodeStub, v Ve
 			v.Reg 	 == "UNDEFINED" || 
 			v.Colour == "UNDEFINED" || 
 			v.VIN == 0 				   {					//If any part of the car is undefined it has not bene fully manufacturered so cannot be sent
-			
+															fmt.Printf("MANUFACTURER_TO_PRIVATE: Car not fully defined")
 															return nil, errors.New("Car not fully defined")
 	}
 	
@@ -289,7 +289,7 @@ func (t *SimpleChaincode) manufacturer_to_private(stub *shim.ChaincodeStub, v Ve
 	
 	_, err := t.save_changes(stub, v)
 	
-															if err != nil { return nil, err }
+															if err != nil { fmt.Printf("MANUFACTURER_TO_PRIVATE: Error saving changes: %s", err); return nil, errors.New("Error saving changes") }
 	
 	return nil, nil
 	
@@ -314,7 +314,7 @@ func (t *SimpleChaincode) private_to_private(stub *shim.ChaincodeStub, v Vehicle
 	
 	_, err := t.save_changes(stub, v)
 	
-															if err != nil { return nil, err }
+															if err != nil { fmt.Printf("PRIVATE_TO_PRIVATE: Error saving changes: %s", err); return nil, errors.New("Error saving changes") }
 	
 	return nil, nil
 	
@@ -336,7 +336,7 @@ func (t *SimpleChaincode) private_to_lease_company(stub *shim.ChaincodeStub, v V
 	}
 	
 	_, err := t.save_changes(stub, v)
-															if err != nil { return nil, err }
+															if err != nil { fmt.Printf("PRIVATE_TO_LEASE_COMPANY: Error saving changes: %s", err); return nil, errors.New("Error saving changes") }
 	
 	return nil, nil
 	
@@ -358,7 +358,7 @@ func (t *SimpleChaincode) lease_company_to_private(stub *shim.ChaincodeStub, v V
 	}
 	
 	_, err := t.save_changes(stub, v)
-															if err != nil { return nil, err }
+															if err != nil { fmt.Printf("LEASE_COMPANY_TO_PRIVATE: Error saving changes: %s", err); return nil, errors.New("Error saving changes") }
 	
 	return nil, nil
 	
@@ -384,7 +384,7 @@ func (t *SimpleChaincode) private_to_scrap_merchant(stub *shim.ChaincodeStub, v 
 	
 	_, err := t.save_changes(stub, v)
 	
-															if err != nil { return nil, err }
+															if err != nil { fmt.Printf("PRIVATE_TO_SCRAP_MERCHANT: Error saving changes: %s", err); return nil, errors.New("Error saving changes") }
 	
 	return nil, nil
 	
@@ -415,7 +415,7 @@ func (t *SimpleChaincode) update_vin(stub *shim.ChaincodeStub, v Vehicle, caller
 	
 	_, err  = t.save_changes(stub, v)						// Save the changes in the blockchain
 	
-															if err != nil { return nil, err } 
+															if err != nil { fmt.Printf("UPDATE_VIN: Error saving changes: %s", err); return nil, errors.New("Error saving changes") } 
 	
 	return nil, nil
 	
@@ -439,7 +439,7 @@ func (t *SimpleChaincode) update_registration(stub *shim.ChaincodeStub, v Vehicl
 	
 	_, err := t.save_changes(stub, v)
 	
-															if err != nil { return nil, err }
+															if err != nil { fmt.Printf("UPDATE_REGISTRATION: Error saving changes: %s", err); return nil, errors.New("Error saving changes") }
 	
 	return nil, nil
 	
@@ -461,7 +461,7 @@ func (t *SimpleChaincode) update_colour(stub *shim.ChaincodeStub, v Vehicle, cal
 	
 	_, err := t.save_changes(stub, v)
 	
-															if err != nil { return nil, err }
+															if err != nil { fmt.Printf("UPDATE_COLOUR: Error saving changes: %s", err); return nil, errors.New("Error saving changes") }
 	
 	return nil, nil
 	
@@ -485,7 +485,7 @@ func (t *SimpleChaincode) update_make(stub *shim.ChaincodeStub, v Vehicle, calle
 	
 	_, err := t.save_changes(stub, v)
 	
-															if err != nil { return nil, err }
+															if err != nil { fmt.Printf("UPDATE_MAKE: Error saving changes: %s", err); return nil, errors.New("Error saving changes") }
 	
 	return nil, nil
 	
@@ -508,7 +508,7 @@ func (t *SimpleChaincode) update_model(stub *shim.ChaincodeStub, v Vehicle, call
 	
 	_, err := t.save_changes(stub, v)
 	
-															if err != nil { return nil, err }
+															if err != nil { fmt.Printf("UPDATE_MODEL: Error saving changes: %s", err); return nil, errors.New("Error saving changes") }
 	
 	return nil, nil
 	
@@ -531,7 +531,7 @@ func (t *SimpleChaincode) scrap_vehicle(stub *shim.ChaincodeStub, v Vehicle, cal
 	
 	_, err := t.save_changes(stub, v)
 	
-															if err != nil { return nil, err }
+															if err != nil { fmt.Printf("SCRAP_VEHICLE: Error saving changes: %s", err); return nil, errors.New("Error saving changes") }
 	
 	return nil, nil
 	
