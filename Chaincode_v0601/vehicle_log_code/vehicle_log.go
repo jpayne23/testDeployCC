@@ -106,18 +106,17 @@ func (t *SimpleChaincode) get_ecert(stub *shim.ChaincodeStub, name string) ([]by
 }
 
 
-func (t *SimpleChaincode) getCert(stub *shim.ChaincodeStub) ([]byte, error) {
+func (t *SimpleChaincode) get_username(stub *shim.ChaincodeStub) (string, error) {
 
-	bytes, _ := stub.GetCallerCertificate();
+	bytes, err := stub.GetCallerCertificate();
 	
-	x509Cert, err := x509.ParseCertificate(bytes);				// Extract Certificate from argument //
+															if err != nil { return "", errors.New("Couldn't retrieve caller certificate") }
+	
+	x509Cert, err := x509.ParseCertificate(bytes);				// Extract Certificate from argument
 														
-															if err != nil { return nil, errors.New("Couldn't parse certificate")	}
-		
-	subject := x509Cert.Subject
-	
+															if err != nil { return "", errors.New("Couldn't parse certificate")	}
 															
-	return []byte(subject.CommonName), nil
+	return x509Cert.Subject.CommonName, nil
 	
 }
 
@@ -206,8 +205,12 @@ func (t *SimpleChaincode) get_vehicle_logs(stub *shim.ChaincodeStub, args []stri
 	err = json.Unmarshal(bytes, &eh)						
 	
 																			if err != nil {	return nil, errors.New("Corrupt vehicle log") }
-															
-	ecert, err := t.get_ecert(stub, args[0])
+	
+	user, err := t.get_username(stub)
+	
+																			if err != nil {	return nil, errors.New("Could not retrieve caller username") }
+	
+	ecert, err := t.get_ecert(stub, user)
 	
 																			//if err != nil {	return nil, err }
 																	
@@ -223,7 +226,7 @@ func (t *SimpleChaincode) get_vehicle_logs(stub *shim.ChaincodeStub, args []stri
 	
 	} else {
 	
-		return t.get_users_vehicle_logs(stub, eh, args[0])
+		return t.get_users_vehicle_logs(stub, eh, user)
 		
 	}
 	
@@ -307,8 +310,6 @@ func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 	
 	if function == "get_vehicle_logs" { 
 			return t.get_vehicle_logs(stub, args) 		
-	} else if function == "getCert" {
-			return t.getCert(stub)
 	}
 	
 	return nil, errors.New("Function of that name not found")
