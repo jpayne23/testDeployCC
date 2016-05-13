@@ -223,9 +223,9 @@ func (t *SimpleChaincode) create_vehicle(stub *shim.ChaincodeStub, caller_name s
 			
 																		if err != nil { fmt.Printf("CREATE_VEHICLE: Error saving changes: %s", err); return nil, errors.New("Error saving changes") }
 																		
-	_, err  = t.create_log(stub,[]string{ "Create","Create V5C",v.V5cID, caller_name})	// Which car and who caused it
+	//_, err  = t.create_log(stub,[]string{ "Create","Create V5C",v.V5cID, caller_name})	// Which car and who caused it
 	
-																		if err != nil { fmt.Printf("CREATE_VEHICLE: Error creating log: %s", err); return nil, errors.New("Error creating log") }																	
+	//																	if err != nil { fmt.Printf("CREATE_VEHICLE: Error creating log: %s", err); return nil, errors.New("Error creating log") }																	
 	
 	return nil, nil
 
