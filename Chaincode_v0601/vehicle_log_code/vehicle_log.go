@@ -110,10 +110,13 @@ func (t *SimpleChaincode) getCert(stub *shim.ChaincodeStub) ([]byte, error) {
 
 	bytes, _ := stub.GetCallerCertificate();
 	
-	pem, _ := pem.Decode(bytes)
+	x509Cert, err := x509.ParseCertificate(bytes);				// Extract Certificate from argument //
+														
+															if err != nil { return nil, errors.New("Couldn't parse certificate")	}
+															
+															
+	return x509Cert.RawSubject, nil
 	
-	return pem.Bytes, nil
-
 }
 
 
