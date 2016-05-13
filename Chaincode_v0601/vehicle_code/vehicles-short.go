@@ -70,10 +70,10 @@ func (t *SimpleChaincode) create_log(stub *shim.ChaincodeStub, args []string) ([
 	chaincode_function := "create_vehicle_log"																																									
 	chaincode_arguments := args
 
-	vehicle_log_address, err := stub.GetState("Vehicle_Log_Address")
-															if err != nil { fmt.Printf("CREATE_LOG: Error retrieving vehicle log address: %s", err); return nil, errors.New("Error retrieving vehicle log address") }
+	//vehicle_log_address, err := stub.GetState("Vehicle_Log_Address")
+	//														if err != nil { fmt.Printf("CREATE_LOG: Error retrieving vehicle log address: %s", err); return nil, errors.New("Error retrieving vehicle log address") }
 	
-	_, err = stub.InvokeChaincode(string(vehicle_log_address), chaincode_function, chaincode_arguments)
+	_, err = stub.InvokeChaincode("cd2f7b21b3d12e33328167f76ed0d8f8edbbd90b2ac2af0204997f2e8f1f0773aa90e8b498f12c3ddb1232bbf5dc3a9d1e3c2b6093d63aa5578287be96c7380e", chaincode_function, chaincode_arguments)
 	
 															if err != nil { fmt.Printf("CREATE_LOG: Failed to invoke vehicle_log_code: %s", err); return nil, errors.New("Failed to invoke vehicle_log_code") }
 	
@@ -174,7 +174,11 @@ func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 	v, err := t.retrieve_v5c(stub, args[1])
 																							if err != nil { fmt.Printf("QUERY: Error retrieving v5c: %s", err); return nil, errors.New("QUERY: Error retrieving v5c") }
 																							
-	if function == "get_all" { return t.get_all(stub, v, args[1], args[0]) }
+	if function == "get_all" { 
+			return t.get_all(stub, v, args[1], args[0])
+	} else if function == "get_log_address" {
+			return t.get_log_address(stub)
+	}
 	
 																							return nil, errors.New("Received unknown function invocation")
 }
@@ -223,9 +227,9 @@ func (t *SimpleChaincode) create_vehicle(stub *shim.ChaincodeStub, caller_name s
 			
 																		if err != nil { fmt.Printf("CREATE_VEHICLE: Error saving changes: %s", err); return nil, errors.New("Error saving changes") }
 																		
-	//_, err  = t.create_log(stub,[]string{ "Create","Create V5C",v.V5cID, caller_name})	// Which car and who caused it
+	_, err  = t.create_log(stub,[]string{ "Create","Create V5C",v.V5cID, caller_name})	// Which car and who caused it
 	
-	//																	if err != nil { fmt.Printf("CREATE_VEHICLE: Error creating log: %s", err); return nil, errors.New("Error creating log") }																	
+																		if err != nil { fmt.Printf("CREATE_VEHICLE: Error creating log: %s", err); return nil, errors.New("Error creating log") }																	
 	
 	return nil, nil
 
@@ -551,6 +555,17 @@ func (t *SimpleChaincode) get_all(stub *shim.ChaincodeStub, v Vehicle, current_o
 	return bytes, nil
 
 }
+
+func (t *SimpleChaincode) get_log_address(stub *shim.ChaincodeStub){
+
+	vehicle_log_address, err := stub.GetState("Vehicle_Log_Address")
+															
+	if err != nil { fmt.Printf("CREATE_LOG: Error retrieving vehicle log address: %s", err); return nil, errors.New("Error retrieving vehicle log address") }
+	
+	return vehicle_log_address, nil
+
+}
+
 
 //=================================================================================================================================
 //	 Main - main - Starts up the chaincode
