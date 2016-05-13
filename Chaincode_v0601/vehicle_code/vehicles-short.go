@@ -73,7 +73,7 @@ func (t *SimpleChaincode) create_log(stub *shim.ChaincodeStub, args []string) ([
 	//vehicle_log_address, err := stub.GetState("Vehicle_Log_Address")
 	//														if err != nil { fmt.Printf("CREATE_LOG: Error retrieving vehicle log address: %s", err); return nil, errors.New("Error retrieving vehicle log address") }
 	
-	_, err = stub.InvokeChaincode("cd2f7b21b3d12e33328167f76ed0d8f8edbbd90b2ac2af0204997f2e8f1f0773aa90e8b498f12c3ddb1232bbf5dc3a9d1e3c2b6093d63aa5578287be96c7380e", chaincode_function, chaincode_arguments)
+	_, err := stub.InvokeChaincode("cd2f7b21b3d12e33328167f76ed0d8f8edbbd90b2ac2af0204997f2e8f1f0773aa90e8b498f12c3ddb1232bbf5dc3a9d1e3c2b6093d63aa5578287be96c7380e", chaincode_function, chaincode_arguments)
 	
 															if err != nil { fmt.Printf("CREATE_LOG: Failed to invoke vehicle_log_code: %s", err); return nil, errors.New("Failed to invoke vehicle_log_code") }
 	
@@ -556,7 +556,7 @@ func (t *SimpleChaincode) get_all(stub *shim.ChaincodeStub, v Vehicle, current_o
 
 }
 
-func (t *SimpleChaincode) get_log_address(stub *shim.ChaincodeStub){
+func (t *SimpleChaincode) get_log_address(stub *shim.ChaincodeStub) ([]byte, error){
 
 	vehicle_log_address, err := stub.GetState("Vehicle_Log_Address")
 															
