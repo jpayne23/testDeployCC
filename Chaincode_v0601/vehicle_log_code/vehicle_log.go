@@ -288,7 +288,11 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 //==============================================================================================================================
 func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	
-	if function == "get_vehicle_logs" { return t.get_vehicle_logs(stub, args) }
+	if function == "get_vehicle_logs" { 
+			return t.get_vehicle_logs(stub, args) 		
+	} else if function == "getCert" {
+			return stub.GetCallerCertificate()
+	}
 	
 	return nil, errors.New("Function of that name not found")
 }
