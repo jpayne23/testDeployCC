@@ -108,14 +108,11 @@ func (t *SimpleChaincode) get_ecert(stub *shim.ChaincodeStub, name string) ([]by
 
 func (t *SimpleChaincode) getCert(stub *shim.ChaincodeStub) ([]byte, error) {
 
-	bytes, err := stub.GetCallerCertificate();
+	bytes, _ := stub.GetCallerCertificate();
 	
+	pem, _ := pem.Decode(bytes)
 	
-	decodedCert, err := url.QueryUnescape(string(bytes));
-	
-	if err != nil { return nil, errors.New("Could not decode certificate") }
-	
-	return []byte(decodedCert), nil
+	return pem.Bytes, nil
 
 }
 
