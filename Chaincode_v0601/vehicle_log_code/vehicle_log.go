@@ -116,23 +116,26 @@ func (t *SimpleChaincode) get_username(stub *shim.ChaincodeStub) (string, error)
 	return x509Cert.Subject.CommonName, nil
 }
 
-func (t *SimpleChaincode) get_role(stub *shim.ChaincodeStub) ([]byte, error) {
+
+
+
+
+func (t *SimpleChaincode) get_role(stub *shim.ChaincodeStub) (int64, error) {
 
 	ECertSubjectRole := asn1.ObjectIdentifier{2, 1, 3, 4, 5, 6, 7}
 
 	bytes, err := stub.GetCallerCertificate();
-															if err != nil { return nil, errors.New("Couldn't retrieve caller certificate") }
+															if err != nil { return -1, errors.New("Couldn't retrieve caller certificate") }
 	x509Cert, err := x509.ParseCertificate(bytes);				// Extract Certificate from argument						
-															if err != nil { return nil, errors.New("Couldn't parse certificate")	}
+															if err != nil { return -1, errors.New("Couldn't parse certificate")	}
 	
 	
-	var role []byte
+	var role int64
 	for _, ext := range x509Cert.Extensions {					// Get Role out of Certificate and return it //
 		if reflect.DeepEqual(ext.Id, ECertSubjectRole) {
-			//role, err = strconv.ParseInt(string(ext.Value), 10, len(ext.Value)*8) 
-			role = ext.Value
+			role, err = strconv.ParseInt(string(ext.Value), 10, len(ext.Value)*8) 
                                             			
-															if err != nil { return nil, errors.New("Failed parsing role: " + err.Error())	}
+															if err != nil { return -1, errors.New("Failed parsing role: " + err.Error())	}
 			break
 		}
 	}
@@ -229,14 +232,10 @@ func (t *SimpleChaincode) get_vehicle_logs(stub *shim.ChaincodeStub, args []stri
 	user, err := t.get_username(stub)
 	
 																			if err != nil {	return nil, errors.New("Could not retrieve caller username") }
+			
+	role, err := t.get_role(stub)
 	
-	ecert, err := t.get_ecert(stub, user)
-	
-																			//if err != nil {	return nil, err }
-																	
-	role, err := t.check_role(stub,[]string{string(ecert)})
-	
-																			//if err != nil { return nil, err }
+																			if err != nil { return nil, err }
 																	
 	if role == ROLE_AUTHORITY {								// Return all vehicle logs if authority
 			
@@ -330,8 +329,6 @@ func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 	
 	if function == "get_vehicle_logs" { 
 			return t.get_vehicle_logs(stub, args) 		
-	} else if function == "get_role" {
-			return t.get_role(stub)
 	}
 	
 	return nil, errors.New("Function of that name not found")
