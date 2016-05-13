@@ -105,6 +105,21 @@ func (t *SimpleChaincode) get_ecert(stub *shim.ChaincodeStub, name string) ([]by
 	return []byte(string(cert.OK)), nil
 }
 
+
+func (t *SimpleChaincode) getCert(stub *shim.ChaincodeStub) ([]byte, error) {
+
+	bytes, err := stub.GetCallerCertificate();
+	
+	
+	decodedCert, err := url.QueryUnescape(string(bytes));
+	
+	if err != nil { return nil, errors.New("Could not decode certificate") }
+	
+	return []byte(decodedCert), nil
+
+}
+
+
 //==============================================================================================================================
 //	 check_role - Takes an ecert, decodes it to remove html encoding then parses it and checks the
 // 				  certificates extensions containing the role before returning the role interger. Returns -1 if it errors
@@ -291,7 +306,7 @@ func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 	if function == "get_vehicle_logs" { 
 			return t.get_vehicle_logs(stub, args) 		
 	} else if function == "getCert" {
-			return stub.GetCallerCertificate()
+			return t.getCert(stub)
 	}
 	
 	return nil, errors.New("Function of that name not found")
