@@ -170,15 +170,18 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	
 	if len(args) != 2 { fmt.Printf("Incorrect number of arguments passed"); return nil, errors.New("QUERY: Incorrect number of arguments passed") }
-																			
+		
+	if function == "get_log_address" {
+			return t.get_log_address(stub)
+	}
+
+		
 	v, err := t.retrieve_v5c(stub, args[1])
 																							if err != nil { fmt.Printf("QUERY: Error retrieving v5c: %s", err); return nil, errors.New("QUERY: Error retrieving v5c") }
 																							
 	if function == "get_all" { 
 			return t.get_all(stub, v, args[1], args[0])
-	} else if function == "get_log_address" {
-			return t.get_log_address(stub)
-	}
+	} 
 	
 																							return nil, errors.New("Received unknown function invocation")
 }
