@@ -92,11 +92,11 @@ func (t *SimpleChaincode) retrieve_v5c(stub *shim.ChaincodeStub, v5cID string) (
 
 	bytes, err := stub.GetState(v5cID)	;					
 				
-															if err != nil {	fmt.Printf("RETRIEVE_V5C: Failed to invoke vehicle_log_code: %s", err); return v, errors.New("Error retrieving vehicle with v5cID = " + v5cID) }
+															if err != nil {	fmt.Printf("RETRIEVE_V5C: Failed to invoke vehicle_log_code: %s", err); return v, errors.New("RETRIEVE_V5C: Error retrieving vehicle with v5cID = " + v5cID) }
 
 	err = json.Unmarshal(bytes, &v)	;						
 
-															if err != nil {	fmt.Printf("RETRIEVE_V5C: Corrupt vehicle record "+string(bytes)+": %s", err); return v, errors.New("Corrupt vehicle record"+string(bytes))	}
+															if err != nil {	fmt.Printf("RETRIEVE_V5C: Corrupt vehicle record "+string(bytes)+": %s", err); return v, errors.New("RETRIEVE_V5C: Corrupt vehicle record"+string(bytes))	}
 	
 	return v, nil
 }
@@ -172,7 +172,7 @@ func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 	if len(args) != 2 { fmt.Printf("Incorrect number of arguments passed"); return nil, errors.New("QUERY: Incorrect number of arguments passed") }
 																			
 	v, err := t.retrieve_v5c(stub, args[1])
-																							if err != nil { fmt.Printf("QUERY: Error retrieving v5c: %s", err); return nil, errors.New("Error retrieving v5c") }
+																							if err != nil { fmt.Printf("QUERY: Error retrieving v5c: %s", err); return nil, errors.New("QUERY: Error retrieving v5c") }
 																							
 	if function == "get_all" { return t.get_all(stub, v, args[1], args[0]) }
 	
@@ -531,7 +531,7 @@ func (t *SimpleChaincode) scrap_vehicle(stub *shim.ChaincodeStub, v Vehicle, cal
 	
 	_, err := t.save_changes(stub, v)
 	
-															if err != nil { fmt.Printf("SCRAP_VEHICLE: Error saving changes: %s", err); return nil, errors.New("Error saving changes") }
+															if err != nil { fmt.Printf("SCRAP_VEHICLE: Error saving changes: %s", err); return nil, errors.New("SCRAP_VEHICLError saving changes") }
 	
 	return nil, nil
 	
@@ -546,7 +546,7 @@ func (t *SimpleChaincode) get_all(stub *shim.ChaincodeStub, v Vehicle, current_o
 	
 	bytes, err := json.Marshal(v)
 	
-																if err != nil { return nil, errors.New("Invalid vehicle object") }
+																if err != nil { return nil, errors.New("GET_ALL: Invalid vehicle object") }
 	
 	return bytes, nil
 
