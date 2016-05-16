@@ -142,7 +142,7 @@ func (t *SimpleChaincode) get_role(stub *shim.ChaincodeStub) ([]byte, error) {
 		
 			res += " Index: " + string(i) + " Value: " + string(ext.Value)
 		
-		}
+		
 	}
 	
 	//temp := int(role)
