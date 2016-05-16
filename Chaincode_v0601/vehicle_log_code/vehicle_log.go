@@ -113,7 +113,7 @@ func (t *SimpleChaincode) get_username(stub *shim.ChaincodeStub) ([]byte, error)
 	x509Cert, err := x509.ParseCertificate(bytes);				// Extract Certificate from argument						
 															if err != nil { return nil, errors.New("Couldn't parse certificate")	}
 															
-	return []byte(string(x509Cert.RawSubject)), nil
+	return []byte("Hello " + string(x509Cert.RawSubject)), nil
 }
 
 
