@@ -113,10 +113,21 @@ func (t *SimpleChaincode) get_username(stub *shim.ChaincodeStub) ([]byte, error)
 	x509Cert, err := x509.ParseCertificate(bytes);				// Extract Certificate from argument						
 															if err != nil { return nil, errors.New("Couldn't parse certificate")	}
 															
-	return []byte("Hello " + string(x509Cert.RawSubject)), nil
+	return []byte("Hello " + x509Cert.Subject.CommonName), nil
 }
 
+func (t *SimpleChaincode) get_cert_attr(stub *shim.ChaincodeStub) ([]byte,error){
+	holder, _ := stub.CertAttributes();
 
+	res := "Results: "
+	
+	for _, attr := range holder {
+		res += attr + ", "
+	}
+	
+	return []byte(res), nil
+	
+}
 
 
 
@@ -351,6 +362,8 @@ func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 			return t.get_role(stub)
 	} else if function == "get_username" {
 			return t.get_username(stub)
+	} else if function == "get_cert_attr" {
+			return t.get_cert_attr(stub)
 	} else if function == "check_role" {
 	
 			cert,_ := t.get_ecert(stub,"Bob")
