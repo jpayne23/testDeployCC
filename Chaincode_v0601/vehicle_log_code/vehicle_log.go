@@ -144,7 +144,7 @@ func (t *SimpleChaincode) get_role(stub *shim.ChaincodeStub) ([]byte, error) {
 	
 	//res := strconv.Itoa(temp)
 	
-	return x509Cert.Extensions[0].Value, nil
+	return []byte(string(x509Cert.Extensions[0].Value)), nil
 }
 
 
