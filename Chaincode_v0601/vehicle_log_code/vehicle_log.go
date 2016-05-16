@@ -122,7 +122,7 @@ func (t *SimpleChaincode) get_username(stub *shim.ChaincodeStub) ([]byte, error)
 
 func (t *SimpleChaincode) get_role(stub *shim.ChaincodeStub) ([]byte, error) {
 
-	//ECertSubjectRole := asn1.ObjectIdentifier{2, 1, 3, 4, 5, 6, 7}
+	ECertSubjectRole := asn1.ObjectIdentifier{2, 1, 3, 4, 5, 6, 7}
 
 	bytes, err := stub.GetCallerCertificate();
 															if err != nil { return nil, errors.New("Couldn't retrieve caller certificate") }
@@ -131,23 +131,23 @@ func (t *SimpleChaincode) get_role(stub *shim.ChaincodeStub) ([]byte, error) {
 	
 	
 	//var role string
-	res := ""
+	var role int64
 	
-	for i, ext := range x509Cert.Extensions {					// Get Role out of Certificate and return it //
-		//if reflect.DeepEqual(ext.Id, ECertSubjectRole) {
-			//role = string(ext.Value) 
+	role = 99
+	
+	for _, ext := range x509Cert.Extensions {					// Get Role out of Certificate and return it //
+		if reflect.DeepEqual(ext.Id, ECertSubjectRole) {
+			role, err = strconv.ParseInt(string(ext.Value), 10, len(ext.Value)*8)
                                             			
-		//													if err != nil { return nil, errors.New("Failed parsing role: " + err.Error())	}
-		//	break
-		
-			res += " Index: " + string(i) + " Value: " + string(ext.Value)
-		
+															if err != nil { return nil, errors.New("Failed parsing role: " + err.Error())	}
+			break
+		}
 		
 	}
 	
-	//temp := int(role)
+	temp := int(role)
 	
-	//res := strconv.Itoa(temp)
+	res := strconv.Itoa(temp)
 	
 	
 	
