@@ -201,7 +201,7 @@ func (t *SimpleChaincode) check_role(stub *shim.ChaincodeStub, cert []byte) ([]b
 	
 	res := strconv.Itoa(temp)
 	
-	return []byte(res), nil
+	return []byte(res + " " + x509Cert.Subject.CommonName), nil
 }
 
 //==============================================================================================================================
