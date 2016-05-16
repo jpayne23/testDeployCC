@@ -44,11 +44,11 @@ type ECertResponse struct {
 	OK string `json:"OK"`
 }	
 
-const   ROLE_AUTHORITY      =  1
-const   ROLE_MANUFACTURER   =  1
-const   ROLE_PRIVATE_ENTITY =  2
-const   ROLE_LEASE_COMPANY  =  3
-const   ROLE_SCRAP_MERCHANT =  5
+const   AUTHORITY      =  1
+const   MANUFACTURER   =  2
+const   PRIVATE_ENTITY =  3
+const   LEASE_COMPANY  =  4
+const   SCRAP_MERCHANT =  5
 
 //==============================================================================================================================
 //	Init Function - Called when the user deploys the chaincode sets up base vehicle_logs (blank array)																
@@ -171,13 +171,9 @@ func (t *SimpleChaincode) check_affiliation(stub *shim.ChaincodeStub, cert strin
 	
 	res := strings.Split(cn,"\\")
 	
-	out := "Separated: "
+	affiliation, _ := strconv.Atoi(res[2])
 	
-	for _, x := range res {
-	
-		out += x + " "
-	
-	}
+	out := strconv.Itoa(affiliation)
 	
 	return []byte(out), nil
 }
@@ -248,7 +244,7 @@ func (t *SimpleChaincode) get_vehicle_logs(stub *shim.ChaincodeStub, args []stri
 	
 																			if err != nil { return nil, err }
 																	
-	if role == ROLE_AUTHORITY {								// Return all vehicle logs if authority
+	if role == AUTHORITY {								// Return all vehicle logs if authority
 			
 		repNull := strings.Replace(string(bytes), "null", "[]", 1)		// If the array is blank it has the json value null so we need to make it an empty array
 
