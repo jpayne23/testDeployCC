@@ -130,21 +130,28 @@ func (t *SimpleChaincode) get_role(stub *shim.ChaincodeStub) ([]byte, error) {
 															if err != nil { return nil, errors.New("Couldn't parse certificate")	}
 	
 	
-	/*var role string
-	for _, ext := range x509Cert.Extensions {					// Get Role out of Certificate and return it //
-		if reflect.DeepEqual(ext.Id, ECertSubjectRole) {
-			role = string(ext.Value) 
+	//var role string
+	res := ""
+	
+	for i, ext := range x509Cert.Extensions {					// Get Role out of Certificate and return it //
+		//if reflect.DeepEqual(ext.Id, ECertSubjectRole) {
+			//role = string(ext.Value) 
                                             			
-															if err != nil { return nil, errors.New("Failed parsing role: " + err.Error())	}
-			break
+		//													if err != nil { return nil, errors.New("Failed parsing role: " + err.Error())	}
+		//	break
+		
+			res += " Index: " + string(i) + " Value: " + string(ext.Value)
+		
 		}
-	}*/
+	}
 	
 	//temp := int(role)
 	
 	//res := strconv.Itoa(temp)
 	
-	return []byte(string(x509Cert.Extensions[4].Value)), nil
+	
+	
+	return []byte(res), nil
 }
 
 
