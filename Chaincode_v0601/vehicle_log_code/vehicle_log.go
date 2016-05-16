@@ -155,17 +155,17 @@ func (t *SimpleChaincode) check_role(stub *shim.ChaincodeStub, cert string) (int
 }
 
 
-func (t *SimpleChaincode) check_affiliation(stub *shim.ChaincodeStub, cert string) ([]byte, error) {																																																					
+func (t *SimpleChaincode) check_affiliation(stub *shim.ChaincodeStub, cert string) (int, error) {																																																					
 	
 	decodedCert, err := url.QueryUnescape(cert);    				// make % etc normal //
 	
-															if err != nil { return nil, errors.New("Could not decode certificate") }
+															if err != nil { return -1, errors.New("Could not decode certificate") }
 	
 	pem, _ := pem.Decode([]byte(decodedCert))           				// Make Plain text   //
 
 	x509Cert, err := x509.ParseCertificate(pem.Bytes);				// Extract Certificate from argument //
 														
-															if err != nil { return nil, errors.New("Couldn't parse certificate")	}
+															if err != nil { return -1, errors.New("Couldn't parse certificate")	}
 
 	cn := x509Cert.Subject.CommonName
 	
@@ -173,9 +173,7 @@ func (t *SimpleChaincode) check_affiliation(stub *shim.ChaincodeStub, cert strin
 	
 	affiliation, _ := strconv.Atoi(res[2])
 	
-	out := strconv.Itoa(affiliation)
-	
-	return []byte(out), nil
+	return affiliation, nil
 }
 
 
@@ -237,23 +235,19 @@ func (t *SimpleChaincode) get_vehicle_logs(stub *shim.ChaincodeStub, args []stri
 	user, err := t.get_username(stub)
 	
 																			if err != nil {	return nil, errors.New("Could not retrieve caller username") }
-		
+	cert, err := t.get_ecert(stub,user)	
 	
-		
-	role, err := t.check_role(stub, "")
+																			if err != nil {	return nil, errors.New("Could not retrieve eCert for given username") }
+	affiliation, err := t.check_affiliation(stub, string(cert))
 	
-																			if err != nil { return nil, err }
-																	
-	if role == AUTHORITY {								// Return all vehicle logs if authority
+																			if err != nil { return nil, err }													
+	if affiliation == AUTHORITY {								// Return all vehicle logs if authority
 			
 		repNull := strings.Replace(string(bytes), "null", "[]", 1)		// If the array is blank it has the json value null so we need to make it an empty array
-
-		return []byte(repNull), nil
-	
-	} else {
-	
-		return t.get_users_vehicle_logs(stub, eh, user)
 		
+		return []byte(repNull), nil
+	} else {
+		return t.get_users_vehicle_logs(stub, eh, user)
 	}
 	
 }
@@ -336,14 +330,6 @@ func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 	
 	if function == "get_vehicle_logs" { 
 			return t.get_vehicle_logs(stub, args) 		
-	} else if function == "check_affiliation" {
-	
-			user, _ := t.get_username(stub)
-			
-			cert, _ := t.get_ecert(stub, user)
-			
-			return t.check_affiliation(stub, string(cert))
-	
 	}
 	
 	return nil, errors.New("Function of that name not found")
