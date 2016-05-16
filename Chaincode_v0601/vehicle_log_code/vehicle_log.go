@@ -89,7 +89,7 @@ func (t *SimpleChaincode) get_ecert(stub *shim.ChaincodeStub, name string) ([]by
 	peer_address, err := stub.GetState("Peer_Address")
 															if err != nil { return nil, errors.New("Error retrieving peer address") }
 
-	response, err := http.Get("http://"+string(peer_address)+"/registrar/"+name+"/ecert") 	// Calls out to the HyperLedger REST API to get the ecert of the user with that name
+	response, err := http.Get("http://"+string(peer_address)+"/registrar/user_type1_3f07d3b7dd/ecert") 	// Calls out to the HyperLedger REST API to get the ecert of the user with that name
     
 															if err != nil { return nil, errors.New("Error calling ecert API") }
 	
@@ -135,7 +135,7 @@ func (t *SimpleChaincode) get_role(stub *shim.ChaincodeStub) ([]byte, error) {
 	
 	role = 99
 	
-	for _, ext := range x509Cert.Extensions {					// Get Role out of Certificate and return it //
+	for _, ext := range x509Cert.Extensions {					// Get Role out of Certificate and return it
 		if reflect.DeepEqual(ext.Id, ECertSubjectRole) {
 			role, err = strconv.ParseInt(string(ext.Value), 10, len(ext.Value)*8)
                                             			
@@ -159,30 +159,37 @@ func (t *SimpleChaincode) get_role(stub *shim.ChaincodeStub) ([]byte, error) {
 //	 check_role - Takes an ecert, decodes it to remove html encoding then parses it and checks the
 // 				  certificates extensions containing the role before returning the role interger. Returns -1 if it errors
 //==============================================================================================================================
-func (t *SimpleChaincode) check_role(stub *shim.ChaincodeStub, args []string) (int64, error) {																							
+func (t *SimpleChaincode) check_role(stub *shim.ChaincodeStub, cert []byte) ([]byte, error) {																							
 	ECertSubjectRole := asn1.ObjectIdentifier{2, 1, 3, 4, 5, 6, 7}																														
 	
-	decodedCert, err := url.QueryUnescape(args[0]);    				// make % etc normal //
+	decodedCert, err := url.QueryUnescape(string(cert));    				// make % etc normal //
 	
-															if err != nil { return -1, errors.New("Could not decode certificate") }
+															if err != nil { return nil, errors.New("Could not decode certificate") }
 	
 	pem, _ := pem.Decode([]byte(decodedCert))           				// Make Plain text   //
 
 	x509Cert, err := x509.ParseCertificate(pem.Bytes);				// Extract Certificate from argument //
 														
-															if err != nil { return -1, errors.New("Couldn't parse certificate")	}
+															if err != nil { return nil, errors.New("Couldn't parse certificate")	}
 
 	var role int64
+	
+	role = 99
+	
 	for _, ext := range x509Cert.Extensions {					// Get Role out of Certificate and return it //
 		if reflect.DeepEqual(ext.Id, ECertSubjectRole) {
 			role, err = strconv.ParseInt(string(ext.Value), 10, len(ext.Value)*8)   
                                             			
-															if err != nil { return -1, errors.New("Failed parsing role: " + err.Error())	}
+															if err != nil { return nil, errors.New("Failed parsing role: " + err.Error())	}
 			break
 		}
 	}
 	
-	return role, nil
+	temp := int(role)
+	
+	res := strconv.Itoa(temp)
+	
+	return []byte(res), nil
 }
 
 //==============================================================================================================================
@@ -344,6 +351,11 @@ func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 			return t.get_role(stub)
 	} else if function == "get_username" {
 			return t.get_username(stub)
+	} else if function == "check_role" {
+	
+			cert,_ := t.get_ecert(stub,"Bob")
+	
+			return t.check_role(stub, cert)
 	}
 	
 	return nil, errors.New("Function of that name not found")
