@@ -106,14 +106,14 @@ func (t *SimpleChaincode) get_ecert(stub *shim.ChaincodeStub, name string) ([]by
 }
 
 
-func (t *SimpleChaincode) get_username(stub *shim.ChaincodeStub) (string, error) {
+func (t *SimpleChaincode) get_username(stub *shim.ChaincodeStub) ([]byte, error) {
 
 	bytes, err := stub.GetCallerCertificate();
-															if err != nil { return "", errors.New("Couldn't retrieve caller certificate") }
+															if err != nil { return nil, errors.New("Couldn't retrieve caller certificate") }
 	x509Cert, err := x509.ParseCertificate(bytes);				// Extract Certificate from argument						
-															if err != nil { return "", errors.New("Couldn't parse certificate")	}
+															if err != nil { return nil, errors.New("Couldn't parse certificate")	}
 															
-	return x509Cert.Subject.CommonName, nil
+	return []byte(x509Cert.Subject.CommonName), nil
 }
 
 
@@ -335,6 +335,8 @@ func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 			return t.get_vehicle_logs(stub, args) 		
 	} else if function == "get_role" {
 			return t.get_role(stub)
+	} else if function == "get_username" {
+			return t.get_username(stub)
 	}
 	
 	return nil, errors.New("Function of that name not found")
