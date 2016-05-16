@@ -117,15 +117,16 @@ func (t *SimpleChaincode) get_username(stub *shim.ChaincodeStub) ([]byte, error)
 }
 
 func (t *SimpleChaincode) get_cert_attr(stub *shim.ChaincodeStub) ([]byte,error){
-	holder, _ := stub.CertAttributes();
+	holder, _ := stub.GetCallerMetadata();
 
+	/*
 	res := "Results: "
 	
 	for _, attr := range holder {
 		res += attr + ", "
 	}
-	
-	return []byte(res), nil
+	*/
+	return []byte(string(holder)), nil
 	
 }
 
