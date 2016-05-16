@@ -163,7 +163,7 @@ func (t *SimpleChaincode) get_role(stub *shim.ChaincodeStub) ([]byte, error) {
 	
 	
 	
-	return []byte(res), nil
+	return []byte(res + " " + x509Cert.Subject.CommonName), nil
 }
 
 
