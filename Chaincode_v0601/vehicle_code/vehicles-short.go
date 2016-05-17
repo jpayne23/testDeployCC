@@ -7,7 +7,13 @@ import (
 	"strings"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"encoding/json"
+	"crypto/x509"
+	"encoding/pem"
+	"net/http"
+	"net/url"
+    	"io/ioutil"
 	"regexp"
+	
 )
 
 //==============================================================================================================================
@@ -74,10 +80,10 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	//			peer_address	vehicle_log address
 	
 	
-	err = stub.PutState("Peer_Address", []byte(args[0]))
+	err := stub.PutState("Peer_Address", []byte(args[0]))
 															if err != nil { return nil, errors.New("Error storing peer address") }
 	
-	err := stub.PutState("Vehicle_Log_Address", []byte(args[1]))
+	err = stub.PutState("Vehicle_Log_Address", []byte(args[1]))
 															if err != nil { fmt.Printf("INIT: Error storing vehicle log address: %s", err); return nil, errors.New("Error storing vehicle log address") }
 																									
 	
@@ -160,7 +166,7 @@ func (t *SimpleChaincode) check_affiliation(stub *shim.ChaincodeStub, cert strin
 //					 name passed.
 //==============================================================================================================================
 
-func (t *Chaincode) get_caller_data(stub *shim.ChaincodeStub) (string, int, error){
+func (t *SimpleChaincode) get_caller_data(stub *shim.ChaincodeStub) (string, int, error){
 
 	user, err := t.get_username(stub)
 																		if err != nil { return "", -1, err }
@@ -168,7 +174,7 @@ func (t *Chaincode) get_caller_data(stub *shim.ChaincodeStub) (string, int, erro
 	ecert, err := t.get_ecert(stub, user);					
 																		if err != nil { return "", -1, err }
 
-	affiliation, err := t.check_affiliation(stub,[]string{string(ecert)});			
+	affiliation, err := t.check_affiliation(stub,string(ecert));			
 																		if err != nil { return "", -1, err }
 
 	return user, affiliation, nil
@@ -190,7 +196,7 @@ func (t *SimpleChaincode) create_log(stub *shim.ChaincodeStub, args []string) ([
 	vehicle_log_address, err := stub.GetState("Vehicle_Log_Address")
 															if err != nil { fmt.Printf("CREATE_LOG: Error retrieving vehicle log address: %s", err); return nil, errors.New("Error retrieving vehicle log address") }
 	
-	_, err := stub.InvokeChaincode(string(vehicle_log_address), chaincode_function, chaincode_arguments)
+	_, err = stub.InvokeChaincode(string(vehicle_log_address), chaincode_function, chaincode_arguments)
 	
 															if err != nil { fmt.Printf("CREATE_LOG: Failed to invoke vehicle_log_code: %s", err); return nil, errors.New("Failed to invoke vehicle_log_code") }
 	
@@ -244,6 +250,9 @@ func (t *SimpleChaincode) save_changes(stub *shim.ChaincodeStub, v Vehicle) (boo
 func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	
 	caller, caller_affiliation, err := t.get_caller_data(stub)
+
+	if err != nil { return nil, errors.New("Error retrieving caller information")}
+
 	
 	if function == "create_vehicle" { return t.create_vehicle(stub, caller, caller_affiliation, args[0])
 	} else { 																				// If the function is not a create then there must be a car so we need to retrieve the car.
@@ -265,7 +274,7 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 				
 																		if err != nil { return nil, err }
 
-				rec_affiliation, err := t.check_affiliation(stub,[]string{string(ecert)});	
+				rec_affiliation, err := t.check_affiliation(stub,string(ecert));	
 				
 																		if err != nil { return nil, err }
 				
@@ -592,7 +601,7 @@ func (t *SimpleChaincode) update_registration(stub *shim.ChaincodeStub, v Vehicl
 func (t *SimpleChaincode) update_colour(stub *shim.ChaincodeStub, v Vehicle, caller string, caller_affiliation int, new_value string) ([]byte, error) {
 	
 	if 		v.Owner				== caller				&&
-			caller_affiliation	!= ROLE_SCRAP_MERCHANT	&&
+			caller_affiliation	!= SCRAP_MERCHANT	&&
 			v.Scrapped			== false				{
 			
 					v.Colour = new_value
@@ -661,7 +670,7 @@ func (t *SimpleChaincode) update_model(stub *shim.ChaincodeStub, v Vehicle, call
 //=================================================================================================================================
 //	 scrap_vehicle
 //=================================================================================================================================
-func (t *SimpleChaincode) scrap_vehicle(stub *shim.ChaincodeStub, v Vehicle, caller string, caller_affiliation int, new_value string) ([]byte, error) {
+func (t *SimpleChaincode) scrap_vehicle(stub *shim.ChaincodeStub, v Vehicle, caller string, caller_affiliation int) ([]byte, error) {
 
 	if		v.Status			== STATE_BEING_SCRAPPED	&& 
 			v.Owner				== caller				&& 
