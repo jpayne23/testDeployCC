@@ -17,6 +17,16 @@ import (
 )
 
 //==============================================================================================================================
+//	 Participant types - Each participant type is mapped to an integer which we use to compare to the value stored in a
+//						 user's eCert
+//==============================================================================================================================
+const   AUTHORITY      =  1
+const   MANUFACTURER   =  2
+const   PRIVATE_ENTITY =  3
+const   LEASE_COMPANY  =  4
+const   SCRAP_MERCHANT =  5
+
+//==============================================================================================================================
 //	 Structure Definitions 
 //==============================================================================================================================
 //	Chaincode - A blank struct for use with Shim (A HyperLedger included go file used for get/put state
@@ -42,13 +52,7 @@ type Vehicle_Log_Holder struct {
 //==============================================================================================================================
 type ECertResponse struct {
 	OK string `json:"OK"`
-}	
-
-const   AUTHORITY      =  1
-const   MANUFACTURER   =  2
-const   PRIVATE_ENTITY =  3
-const   LEASE_COMPANY  =  4
-const   SCRAP_MERCHANT =  5
+}
 
 //==============================================================================================================================
 //	Init Function - Called when the user deploys the chaincode sets up base vehicle_logs (blank array)																
@@ -275,7 +279,7 @@ func (t *SimpleChaincode) get_users_vehicle_logs(stub *shim.ChaincodeStub, eh Ve
 //==============================================================================================================================
 //	 Router Functions
 //==============================================================================================================================
-//	Run - Called on chaincode invoke. Takes a function name passed and calls that function.
+//	Invoke - Called on chaincode invoke. Takes a function name passed and calls that function.
 //==============================================================================================================================
 func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 

@@ -16,7 +16,7 @@ type  SimpleChaincode struct {
 }
 
 //==============================================================================================================================
-//	Init Function - Called when the user deploys the chaincode sets up base vehicle_logs (blank array)																
+//	Init Function - Called when the user deploys the chaincode															
 //==============================================================================================================================
 func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 														
@@ -24,14 +24,10 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 }
 
 //==============================================================================================================================
-//	 General Functions
+//	Invoke Functions
 //==============================================================================================================================
-
-//==============================================================================================================================
-//	Log Functions
-//==============================================================================================================================
-//	Create Log - Creates a new vehicle_log object using the data passed and the current time then appends it to the vehicle_logs array
-//				 before saving the state to the ledger
+//	add_number - Invokes the numbers chaincode and calls the function add_number, chaincode name currently hardcoded
+//
 //==============================================================================================================================
 func (t *SimpleChaincode) add_number(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 
@@ -43,8 +39,8 @@ func (t *SimpleChaincode) add_number(stub *shim.ChaincodeStub, args []string) ([
 }
 
 //==============================================================================================================================
-//	get_vehicle_logs - Takes a users name and returns the vehicle logs they are entitled to. If they are the regulator they see
-//				       all vehicle logs otherwise it calls a function to get the users vehicle logs
+//	get_number - Queries the numbers chaincode and calls get_number, chaincode name currently hardcoded.
+//				 Returns the current number value stored in the world state
 //==============================================================================================================================
 func (t *SimpleChaincode) get_number(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 
@@ -76,6 +72,7 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 //==============================================================================================================================
 func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	
+	// Handle different functions
 	if function == "get_number" { 
 			return t.get_number(stub, args) 		
 	}
