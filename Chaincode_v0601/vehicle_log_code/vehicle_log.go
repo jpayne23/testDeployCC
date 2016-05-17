@@ -124,36 +124,9 @@ func (t *SimpleChaincode) get_username(stub *shim.ChaincodeStub) (string, error)
 
 
 //==============================================================================================================================
-//	 check_role - Takes an ecert, decodes it to remove html encoding then parses it and checks the
-// 				  certificates extensions containing the role before returning the role interger. Returns -1 if it errors
+//	 check_affiliation - Takes an ecert as a string, decodes it to remove html encoding then parses it and checks the
+// 				  		certificates common name. The affiliation is stored as part of the common name.
 //==============================================================================================================================
-func (t *SimpleChaincode) check_role(stub *shim.ChaincodeStub, cert string) (int64, error) {																							
-	ECertSubjectRole := asn1.ObjectIdentifier{2, 1, 3, 4, 5, 6, 7}																														
-	
-	decodedCert, err := url.QueryUnescape(cert);    				// make % etc normal //
-	
-															if err != nil { return -1, errors.New("Could not decode certificate") }
-	
-	pem, _ := pem.Decode([]byte(decodedCert))           				// Make Plain text   //
-
-	x509Cert, err := x509.ParseCertificate(pem.Bytes);				// Extract Certificate from argument //
-														
-															if err != nil { return -1, errors.New("Couldn't parse certificate")	}
-
-	var role int64
-	
-	for _, ext := range x509Cert.Extensions {					// Get Role out of Certificate and return it //
-		if reflect.DeepEqual(ext.Id, ECertSubjectRole) {
-			role, err = strconv.ParseInt(string(ext.Value), 10, len(ext.Value)*8)   
-                                            			
-															if err != nil { return -1, errors.New("Failed parsing role: " + err.Error())	}
-			break
-		}
-	}
-	
-	return role, nil
-}
-
 
 func (t *SimpleChaincode) check_affiliation(stub *shim.ChaincodeStub, cert string) (int, error) {																																																					
 	
