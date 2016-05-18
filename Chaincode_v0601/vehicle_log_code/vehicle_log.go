@@ -7,13 +7,11 @@ import (
 	"strings"
 	"encoding/json"
 	"crypto/x509"
-	"encoding/asn1"
 	"encoding/pem"
 	"net/http"
 	"net/url"
 	"io/ioutil"
 	"strconv"
-	"reflect"
 )
 
 //==============================================================================================================================
