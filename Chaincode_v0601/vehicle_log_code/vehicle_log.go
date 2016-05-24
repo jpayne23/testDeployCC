@@ -158,12 +158,12 @@ func (t *SimpleChaincode) check_affiliation(stub *shim.ChaincodeStub, cert strin
 //	Create Log - Creates a new vehicle_log object using the data passed and the current time then appends it to the vehicle_logs array
 //				 before saving the state to the ledger
 //==============================================================================================================================
-func (t *SimpleChaincode) create_vehicle_log(stub *shim.ChaincodeStub, vehicle_log_name string, vehicle_log_text string, vehicle_log_obj_id string, vehicle_log_users []string) ([]byte, error) {
+func (t *SimpleChaincode) create_vehicle_log(stub *shim.ChaincodeStub, vehicle_log_name string, vehicle_log_text string, vehicle_log_obj_id string, vehicle_log_time string, vehicle_log_users []string) ([]byte, error) {
 
 	var e Vehicle_Log
 	
 	e.Name 	 = vehicle_log_name
-	e.Time	 = "02/01/2006 15:04:05"
+	e.Time	 = vehicle_log_time
 	e.Text	 = vehicle_log_text
 	e.Obj_ID = vehicle_log_obj_id
 	e.Users	 = vehicle_log_users
@@ -283,17 +283,22 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 
 	// Handle different functions
 	if function == "create_vehicle_log" {
-		if(len(args) < 4) {
+		if(len(args) < 5) {
 			return nil, errors.New("Invalid number of arguments supplied")
 		}
 		
 		var users_involved []string
 		
-		for i := 3; i < len(args); i++ {
+		for i := 4; i < len(args); i++ {
 		
 			users_involved = append(users_involved, args[i])
 		}
-		return t.create_vehicle_log(stub, args[0], args[1], args[2], users_involved) 
+		
+		//Args
+		//		0			1			2				3			4+
+		//	log_name	log_text	log_obj_id		log_time	users_involved
+		
+		return t.create_vehicle_log(stub, args[0], args[1], args[2], args[3], users_involved) 
 	}
 	
 	return nil, errors.New("Function of that name not found")
