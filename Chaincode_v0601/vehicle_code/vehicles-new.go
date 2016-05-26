@@ -12,7 +12,7 @@ import (
 	"net/http"
 	"net/url"
     "io/ioutil"
-	"regexp"
+	//"regexp"
 	
 )
 
@@ -320,7 +320,7 @@ func (t *SimpleChaincode) create_vehicle(stub *shim.ChaincodeStub, caller string
 		//																return nil, errors.New("Invalid v5cID provided")
 	//}
 
-	err = json.Unmarshal([]byte(vehicle_json), &v)							// Convert the JSON defined above into a vehicle object for go
+	err := json.Unmarshal([]byte(vehicle_json), &v)							// Convert the JSON defined above into a vehicle object for go
 	
 																		if err != nil { return nil, errors.New("Invalid JSON object") }
 
