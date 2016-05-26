@@ -11,7 +11,7 @@ import (
 	"encoding/pem"
 	"net/http"
 	"net/url"
-    	"io/ioutil"
+    "io/ioutil"
 	"regexp"
 	
 )
@@ -76,16 +76,12 @@ type ECertResponse struct {
 func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	
 	//Args
-	//				0					1
-	//			peer_address	vehicle_log address
+	//				0
+	//			peer_address
 	
 	
 	err := stub.PutState("Peer_Address", []byte(args[0]))
 															if err != nil { return nil, errors.New("Error storing peer address") }
-	
-	err = stub.PutState("Vehicle_Log_Address", []byte(args[1]))
-															if err != nil { fmt.Printf("INIT: Error storing vehicle log address: %s", err); return nil, errors.New("Error storing vehicle log address") }
-																									
 	
 	return nil, nil
 }
@@ -179,30 +175,6 @@ func (t *SimpleChaincode) get_caller_data(stub *shim.ChaincodeStub) (string, int
 
 	return user, affiliation, nil
 }
-
-
-
-
-//==============================================================================================================================
-//													NOT WORKING			
-//	 create_log - Invokes the function of event_code chaincode with the name 'chaincodeName' to log an
-//					event.
-//==============================================================================================================================
-func (t *SimpleChaincode) create_log(stub *shim.ChaincodeStub, args []string) ([]byte, error) {	
-																						
-	chaincode_function := "create_vehicle_log"																																									
-	chaincode_arguments := args
-
-	vehicle_log_address, err := stub.GetState("Vehicle_Log_Address")
-															if err != nil { fmt.Printf("CREATE_LOG: Error retrieving vehicle log address: %s", err); return nil, errors.New("Error retrieving vehicle log address") }
-	
-	_, err = stub.InvokeChaincode(string(vehicle_log_address), chaincode_function, chaincode_arguments)
-	
-															if err != nil { fmt.Printf("CREATE_LOG: Failed to invoke vehicle_log_code: %s", err); return nil, errors.New("Failed to invoke vehicle_log_code") }
-	
-	return nil,nil
-}
-
 
 //==============================================================================================================================
 //	 retrieve_v5c - Gets the state of the data at v5cID in the ledger then converts it from the stored 
@@ -306,7 +278,7 @@ func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 	if len(args) != 1 { fmt.Printf("Incorrect number of arguments passed"); return nil, errors.New("QUERY: Incorrect number of arguments passed") }
 
 	v, err := t.retrieve_v5c(stub, args[0])
-																							if err != nil { fmt.Printf("QUERY: Error retrieving v5c: %s", err); return nil, errors.New("QUERY: Error retrieving v5c") }
+																							if err != nil { fmt.Printf("QUERY: Error retrieving v5c: %s", err); return nil, errors.New("QUERY: Error retrieving v5c "+err.Error()) }
 															
 	caller, caller_affiliation, err := t.get_caller_data(stub)
 															
@@ -352,14 +324,14 @@ func (t *SimpleChaincode) create_vehicle(stub *shim.ChaincodeStub, caller string
 	
 																		if err != nil { return nil, errors.New("Invalid JSON object") }
 
-	record, err := stub.GetState(v.V5cID) 								// If not an error then a record exists so cant create a new car with this V5cID as it must be unique
+	//record, err := stub.GetState(v.V5cID) 								// If not an error then a record exists so cant create a new car with this V5cID as it must be unique
 	
-																		if record != nil { return nil, errors.New("Vehicle already exists") }
+																		//if record != nil { return nil, errors.New("Vehicle already exists") }
 	
-	if 	caller_affiliation != AUTHORITY {							// Only the regulator can create a new v5c
+	//if 	caller_affiliation != AUTHORITY {							// Only the regulator can create a new v5c
 
-																		return nil, errors.New("Permission Denied")
-	}
+																		//return nil, errors.New("Permission Denied")
+	//}
 	
 	_, err  = t.save_changes(stub, v)									
 			
