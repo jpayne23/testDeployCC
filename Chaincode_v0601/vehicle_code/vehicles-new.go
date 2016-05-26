@@ -187,7 +187,7 @@ func (t *SimpleChaincode) retrieve_v5c(stub *shim.ChaincodeStub, v5cID string) (
 
 	bytes, err := stub.GetState(v5cID)	;					
 				
-															if err != nil {	fmt.Printf("RETRIEVE_V5C: Failed to invoke vehicle_log_code: %s", err); return v, errors.New("RETRIEVE_V5C: Error retrieving vehicle with v5cID = " + v5cID) }
+															if err != nil {	fmt.Printf("RETRIEVE_V5C: Failed to invoke vehicle_code: %s", err); return v, errors.New("RETRIEVE_V5C: Error retrieving vehicle with v5cID = " + v5cID) }
 
 	err = json.Unmarshal(bytes, &v)	;						
 
@@ -310,15 +310,15 @@ func (t *SimpleChaincode) create_vehicle(stub *shim.ChaincodeStub, caller string
 	
 	vehicle_json := "{"+v5c_ID+vin+make+model+reg+owner+colour+leaseContract+status+scrapped+"}" 	// Concatenates the variables to create the total JSON object
 	
-	matched, err := regexp.Match("^[A-z][A-z][0-9]{7}", []byte(v5cID))  				// matched = true if the v5cID passed fits format of two letters followed by seven digits
+	//matched, err := regexp.Match("^[A-z][A-z][0-9]{7}", []byte(v5cID))  				// matched = true if the v5cID passed fits format of two letters followed by seven digits
 	
-																		if err != nil { fmt.Printf("CREATE_VEHICLE: Invalid v5cID: %s", err); return nil, errors.New("Invalid v5cID") }
+																		//if err != nil { fmt.Printf("CREATE_VEHICLE: Invalid v5cID: %s", err); return nil, errors.New("Invalid v5cID") }
 	
-	if 				v5c_ID  == "" 	 || 
-					matched == false    {
-																		fmt.Printf("CREATE_VEHICLE: Invalid v5cID provided");
-																		return nil, errors.New("Invalid v5cID provided")
-	}
+	//if 				v5c_ID  == "" 	 || 
+				//	matched == false    {
+		//																fmt.Printf("CREATE_VEHICLE: Invalid v5cID provided");
+		//																return nil, errors.New("Invalid v5cID provided")
+	//}
 
 	err = json.Unmarshal([]byte(vehicle_json), &v)							// Convert the JSON defined above into a vehicle object for go
 	
