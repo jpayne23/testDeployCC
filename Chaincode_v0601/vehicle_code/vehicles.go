@@ -294,14 +294,18 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	
 	if len(args) != 1 { fmt.Printf("Incorrect number of arguments passed"); return nil, errors.New("QUERY: Incorrect number of arguments passed") }
-
-	v, err := t.retrieve_v5c(stub, args[0])
-																							if err != nil { fmt.Printf("QUERY: Error retrieving v5c: %s", err); return nil, errors.New("QUERY: Error retrieving v5c "+err.Error()) }
 															
 	caller, caller_affiliation, err := t.get_caller_data(stub)
+
+																							if err != nil { fmt.Printf("QUERY: Error retrieving caller details", err); return nil, errors.New("QUERY: Error retrieving caller details") }
 															
 	if function == "get_vehicle_details" { 
+	
+			v, err := t.retrieve_v5c(stub, args[0])
+																							if err != nil { fmt.Printf("QUERY: Error retrieving v5c: %s", err); return nil, errors.New("QUERY: Error retrieving v5c "+err.Error()) }
+	
 			return t.get_vehicle_details(stub, v, caller, caller_affiliation)
+			
 	} else if function == "get_vehicles" {
 			return t.get_vehicles(stub, caller, caller_affiliation)
 	}
@@ -731,7 +735,6 @@ func (t *SimpleChaincode) get_vehicle_details(stub *shim.ChaincodeStub, v Vehicl
 
 func (t *SimpleChaincode) get_vehicles(stub *shim.ChaincodeStub, caller string, caller_affiliation int) ([]byte, error) {
 
-	
 	bytes, err := stub.GetState("v5cIDs")
 		
 																			if err != nil { return nil, errors.New("Unable to get v5cIDs") }
@@ -742,9 +745,31 @@ func (t *SimpleChaincode) get_vehicles(stub *shim.ChaincodeStub, caller string, 
 	
 																			if err != nil {	return nil, errors.New("Corrupt V5C_Holder") }
 	
+	result := "["
 	
-	return bytes, nil
-
+	var temp []byte
+	var v Vehicle
+	
+	for _, v5c := range v5cIDs.V5Cs {
+		
+		v, err = t.retrieve_v5c(stub, v5c)
+		
+		if err != nil {return nil, errors.New("Failed to retrieve V5C")}
+		
+		temp, err = t.get_vehicle_details(stub, v, caller, caller_affiliation)
+		
+		if err == nil {
+			result += string(temp) + ","	
+		}
+	}
+	
+	if len(result) == 1 {
+		result = "null"
+	} else {
+		result = result[:len(result)-1] + "]"
+	}
+	
+	return []byte(result), nil
 }
 
 //=================================================================================================================================
