@@ -31,7 +31,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 //==============================================================================================================================
 func (t *SimpleChaincode) add_number(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 
-	_, err := stub.InvokeChaincode("6198f2344e2d949a24df601c8826315d030d3111b329fce1fee72ed994f2fcd88da0ab395e1cc30450a081e3e9f5ccf91bf0c717a093271b40feba619fdb5ab3","add_number",args)
+	_, err := stub.InvokeChaincode("970000a712cf185274f39566276b18591c125ab41ee2674b3ccfeeed3e95a21b7129a4b97598e7807a362b345609caa8985f28f68e3a1614e0f12dcd99d3a589","add_number",args)
 
 	if err != nil { return nil, errors.New("Unable to invoke chaincode") }
 
@@ -44,7 +44,7 @@ func (t *SimpleChaincode) add_number(stub *shim.ChaincodeStub, args []string) ([
 //==============================================================================================================================
 func (t *SimpleChaincode) get_number(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 
-	res, err := stub.QueryChaincode("6198f2344e2d949a24df601c8826315d030d3111b329fce1fee72ed994f2fcd88da0ab395e1cc30450a081e3e9f5ccf91bf0c717a093271b40feba619fdb5ab3","get_number",args)
+	res, err := stub.QueryChaincode("970000a712cf185274f39566276b18591c125ab41ee2674b3ccfeeed3e95a21b7129a4b97598e7807a362b345609caa8985f28f68e3a1614e0f12dcd99d3a589","get_number",args)
 		
 																			if err != nil { return nil, errors.New("Unable to query chaincode") }														
 
