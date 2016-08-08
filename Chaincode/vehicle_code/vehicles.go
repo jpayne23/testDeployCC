@@ -139,7 +139,7 @@ func (t *SimpleChaincode) add_data(stub *shim.ChaincodeStub, function string, ar
 	columnTwo := shim.ColumnDefinition{Name: "ecert", Type: shim.ColumnDefinition_STRING, Key: false}
 	columnDefsForEcertTable = append(columnDefsForEcertTable, &columnOne)
 	columnDefsForEcertTable = append(columnDefsForEcertTable, &columnTwo)
-	err = stub.CreateTable("E_Certs", columnDefsForEcertTable)
+	err := stub.CreateTable("E_Certs", columnDefsForEcertTable)
 	
 															if err != nil { return nil, errors.New("Error creating eCert table. Error: "+err.Error())}
 	
