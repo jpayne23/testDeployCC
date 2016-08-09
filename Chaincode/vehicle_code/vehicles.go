@@ -121,7 +121,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	err = stub.PutState("Peer_Address", []byte(args[0]))
 															if err != nil { return nil, errors.New("Error storing peer address") }
 	*/
-/*
+
 	var ecert User_and_eCert
 	
 	for i:= 0; i < len(args); i++ {
@@ -130,8 +130,8 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 															
 		t.add_ecert(stub, ecert.Identity, ecert.eCert)
 	}
-*/
-	t.add_ecert(stub, args[0], args[1])
+
+	//t.add_ecert(stub, args[0], args[1])
 	
 	//t.add_ecert(stub, "DVLA", "-----BEGIN+CERTIFICATE-----%0AMIIBoTCCAUegAwIBAgIBATAKBggqhkjOPQQDAzApMQswCQYDVQQGEwJVUzEMMAoG%0AA1UEChMDSUJNMQwwCgYDVQQDEwNlY2EwHhcNMTYwODA4MDkzMjM2WhcNMTYxMTA2%0AMDkzMjM2WjA5MQswCQYDVQQGEwJVUzEMMAoGA1UEChMDSUJNMRwwGgYDVQQDDBNE%0AVkxBXzRcZ3JvdXAxXDAwMDAxMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEgj2o%0An6z%2Bt2bIGOZNtth86ToxRox7%2FemsVTvMFSmkvq0lAbIgqeRveF3IBj6rfEgS0iWH%0AgiWWowozZiOtbfWuyaNQME4wDgYDVR0PAQH%2FBAQDAgeAMAwGA1UdEwEB%2FwQCMAAw%0ADQYDVR0OBAYEBAECAwQwDwYDVR0jBAgwBoAEAQIDBDAOBgZRAwQFBgcBAf8EATEw%0ACgYIKoZIzj0EAwMDSAAwRQIhAKz0nFR1bnQZsg8vcul%2F4HVAuReHbSDwyw1IFknF%0AS%2BYTAiAzptnd07wp%2FjjuONCvFQRB3o8PqLQJV3knR86Cjfg2jA%3D%3D%0A-----END+CERTIFICATE-----%0A")	
 
