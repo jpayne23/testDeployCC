@@ -124,12 +124,16 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 
 	var ecert User_and_eCert
 	
-	for i:= 0; i < len(args); i++ {
-		err := json.Unmarshal([]byte(args[i]), &ecert)
-															if err != nil { return nil , errors.New(args[i] + " was invalid. Should be JSON with fields identity and eCert")}
+
+	err = json.Unmarshal([]byte(args[0]), &ecert)
+															if err != nil { return nil , errors.New(args[0] + " was invalid. Should be JSON with fields identity and eCert")}
 															
-		t.add_ecert(stub, ecert.Identity, ecert.eCert)
-	}
+	t.add_ecert(stub, ecert.Identity, ecert.eCert)
+
+
+	//for i:= 0; i < len(args); i++ {
+		
+	//}
 
 	//t.add_ecert(stub, args[0], args[1])
 	
